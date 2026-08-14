@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /_backup_html/
+
+Sitemap: https://chef4youbyfranko.com/sitemap.xml
