@@ -49,7 +49,7 @@
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{font-family:var(--sans);background:var(--ink);color:var(--white);overflow-x:hidden;min-width:0}
+    body{font-family:var(--sans);background:var(--ink);color:var(--white);overflow-x:hidden}
     img{max-width:100%;display:block}
     a{text-decoration:none;color:inherit}
 
@@ -72,7 +72,7 @@
 
     /* HERO */
     .hero{position:relative;width:100%;height:100vh;min-height:640px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-    .hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .hero__banner{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     .hero__ov{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.38) 0%,rgba(0,0,0,.12) 35%,rgba(0,0,0,.62) 70%,rgba(0,0,0,.9) 100%)}
     .hero__c{position:relative;z-index:2;text-align:center;padding:0 1.5rem;max-width:980px}
     .hero__eye{font-size:.66rem;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--gold-l);margin-bottom:1.5rem;opacity:0;animation:up .9s .3s forwards}
@@ -303,21 +303,7 @@
     @media(max-width:480px){
       .hero__btns{flex-direction:column}
       .btn-gold,.btn-ghost{width:100%;text-align:center}    }
-    /* Guardas de desbordamiento y ajustes móviles */
-    @media(max-width:768px){
-      .nav__right{gap:.6rem}
-      .nav__logo{font-size:1.2rem;letter-spacing:.12em}
-      .lang button{padding:.18rem .4rem}
-      .btn-cta{padding:.58rem .75rem;font-size:.58rem}
-      .svc,.tcard{min-width:0}
-      .booking,.about,.svcs__g,.testis__g,.exp__cards{width:100%;max-width:100%}
-    }
-    @media(max-width:480px){
-      .nav__right .btn-cta{display:none}
-      .nav__logo{font-size:1.05rem}
-      .hero__h{font-size:clamp(3rem,15vw,5rem)}
-      .bk-right{padding:3rem 1.25rem}
-    }  </style>
+  </style>
 </head>
 <body>
 
@@ -342,9 +328,7 @@
 
 <!-- HERO -->
 <section class="hero" id="hero">
-  <video autoplay muted loop playsinline poster="https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/1556f6988_9ca0cd6c7_ChatGPTImage22jul202606_11_08am.png">
-    <source src="https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/639754515_1af606998_videopromocional.mp4" type="video/mp4"/>
-  </video>
+  <img class="hero__banner" src="assets/banner-menu-secret.png" alt="Secret French Cuisine — menú gourmet"/>
   <div class="hero__ov"></div>
   <div class="hero__c">
     <p class="hero__eye" data-k="he">Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit</p>
@@ -515,6 +499,22 @@
   </div>
 </section>
 
+<!-- QUOTE CALCULATOR -->
+<section id="quote-calculator" style="background:#0b0b0b;padding:4rem 1.5rem">
+  <div style="max-width:900px;margin:0 auto;border:1px solid rgba(201,169,110,.2);padding:1.5rem;border-radius:8px">
+    <h3 style="font-family:var(--serif);font-size:2rem;color:#fff;margin-bottom:1rem">Estimate Your Experience</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
+      <div><label for="q_service">Service</label><select id="q_service"><option value="villa">Private Villa Dinner</option><option value="romantic">Romantic Dinner</option><option value="wedding">Wedding / Event</option><option value="class">Cooking Class</option><option value="yacht">Yacht Chef</option></select></div>
+      <div><label for="q_guests">Guests</label><input id="q_guests" type="number" min="1" value="4"></div>
+      <div><label for="q_location">Location</label><select id="q_location"><option value="pv">Puerto Vallarta</option><option value="nn">Nuevo Nayarit</option><option value="pm">Punta Mita</option></select></div>
+      <div><label for="q_package">Package</label><select id="q_package"><option value="standard">Standard</option><option value="premium">Premium</option><option value="gold">Gold</option></select></div>
+    </div>
+    <button type="button" onclick="calcQuote()" style="margin-top:1rem" class="btn-gold">Calculate</button>
+    <p id="q_result" style="margin-top:1rem;color:#e8d5b0" aria-live="polite"></p>
+    <small style="color:#aaa">Estimated only. Final quote depends on menu, date, logistics and special requests.</small>
+  </div>
+</section>
+
 <!-- BOOKING -->
 <section class="booking" id="booking">
   <div class="bk-left rvl">
@@ -617,6 +617,25 @@
 <script>
 /* NAV */
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>60));
+
+/* QUOTE CALCULATOR */
+function calcQuote(){
+  const guests=Math.max(1,Math.min(500,parseInt(document.getElementById('q_guests').value||'1',10)));
+  const pkg=document.getElementById('q_package').value;
+  const loc=document.getElementById('q_location').value;
+  const service=document.getElementById('q_service').value;
+  const basePerGuest={standard:120,premium:180,gold:260};
+  const locFee={pv:0,nn:35,pm:55};
+  const serviceMult={villa:1,romantic:1.1,wedding:1.35,class:0.95,yacht:1.25};
+  let subtotal=guests*basePerGuest[pkg]*serviceMult[service];
+  subtotal+=locFee[loc];
+  const iva=subtotal*0.16;
+  const serviceFee=subtotal*0.18;
+  const total=subtotal+iva+serviceFee;
+  document.getElementById('q_result').innerHTML=
+    `Estimated subtotal: <strong>$${subtotal.toFixed(0)} USD</strong><br>`+
+    `Estimated total (IVA + service): <strong>$${total.toFixed(0)} USD</strong>`;
+}
 
 /* REVEAL */
 var obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('vis')}),{threshold:.1});
@@ -795,4 +814,9 @@ async function submitForm(){
 }
 </script>
 </body>
-</html>
+</html>    <div style="margin-top:2rem;border-radius:4px;overflow:hidden;position:relative">
+      <img src="https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/79cf5068a_6ae980061_773f38a4-4258-40a6-8bfb-28f89fe2c9dc.png" alt="Chef Franko y su equipo" style="width:100%;height:210px;object-fit:cover;object-position:center top;filter:brightness(.92)"/>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:.65rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,.7))">
+        <p style="font-family:var(--sans);font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)" data-k="atl">The Team · Puerto Vallarta</p>
+      </div>
+    </div>
