@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="robots" content="index, follow, max-image-preview:large"/>
   <meta name="author" content="Franko Salgado"/>
-  <!-- Google Analytics 4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4T0SBCQVF"></script>
+  <!-- Google Analytics 4 — with consent -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-X4T0SBCQVF');
-    gtag('config', 'GT-P8266HD5');
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
   </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4T0SBCQVF"></script>
   <title>Private Chef Puerto Vallarta | Chef 4 You by Franko Salgado</title>
   <meta name="description" content="Private chef in Puerto Vallarta, Punta Mita and Riviera Nayarit for luxury villa dinners, yacht dining, weddings and cooking classes with Chef Franko Salgado."/>
   <meta name="keywords" content="private chef Puerto Vallarta, villa chef Punta Mita, luxury dining Riviera Nayarit, wedding chef Vallarta, cooking classes Puerto Vallarta, Chef Franko Salgado, romantic dinner villa, yacht chef Mexico"/>
@@ -26,14 +28,14 @@
   <meta property="og:url" content="https://chef4youbyfranko.com/"/>
   <meta property="og:title" content="Private Chef Puerto Vallarta | Chef 4 You by Franko Salgado"/>
   <meta property="og:description" content="Luxury private chef experiences in Puerto Vallarta, Punta Mita and Riviera Nayarit: villa dinners, yacht dining, weddings and cooking classes."/>
-  <meta property="og:image" content="https://chef4youbyfranko.com/assets/chef-perfil.png"/>
+  <meta property="og:image" content="https://media.base44.com/images/public/6a717d7af1768f8448815281/a58d7c21d_b14b67a7-7fa7-4c05-8514-6836b5470b56.png"/>
   <meta property="og:image:alt" content="Chef Franko Salgado, private chef in Puerto Vallarta"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="Private Chef Puerto Vallarta | Chef 4 You by Franko Salgado"/>
   <meta name="twitter:description" content="Luxury private chef experiences in Puerto Vallarta, Punta Mita and Riviera Nayarit."/>
-  <meta name="twitter:image" content="https://chef4youbyfranko.com/assets/chef-perfil.png"/>
+  <meta name="twitter:image" content="https://media.base44.com/images/public/6a717d7af1768f8448815281/a58d7c21d_b14b67a7-7fa7-4c05-8514-6836b5470b56.png"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽</text></svg>"/>
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FoodEstablishment","name":"Chef 4 You by Franko Salgado","description":"Private chef experiences in Puerto Vallarta, Punta Mita and Riviera Nayarit.","url":"https://chef4youbyfranko.com","image":"https://chef4youbyfranko.com/assets/chef-perfil.png","telephone":"+523221606843","email":"franko@chef4youbyfranko.com","address":{"@type":"PostalAddress","addressLocality":"Puerto Vallarta","addressRegion":"Jalisco","addressCountry":"MX"},"areaServed":["Puerto Vallarta","Punta Mita","Nuevo Nayarit","Riviera Nayarit","Banderas Bay"],"servesCuisine":["Mexican","International","Fine Dining"],"priceRange":"$$$","award":"Star Diamond Award — American Academy of Hospitality Sciences","sameAs":["https://instagram.com/franko_s83"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FoodEstablishment","name":"Chef 4 You by Franko Salgado","description":"Private chef experiences in Puerto Vallarta, Punta Mita and Riviera Nayarit.","url":"https://chef4youbyfranko.com","image":"https://media.base44.com/images/public/6a717d7af1768f8448815281/a58d7c21d_b14b67a7-7fa7-4c05-8514-6836b5470b56.png","telephone":"+523221606843","email":"franko@chef4youbyfranko.com","address":{"@type":"PostalAddress","addressLocality":"Puerto Vallarta","addressRegion":"Jalisco","addressCountry":"MX"},"areaServed":["Puerto Vallarta","Punta Mita","Nuevo Nayarit","Riviera Nayarit","Banderas Bay"],"servesCuisine":["Mexican","International","Fine Dining"],"priceRange":"$$$","award":"Star Diamond Award — American Academy of Hospitality Sciences","sameAs":["https://instagram.com/franko_s83"]}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -303,6 +305,12 @@
     @media(max-width:480px){
       .hero__btns{flex-direction:column}
       .btn-gold,.btn-ghost{width:100%;text-align:center}    }
+  
+    /* Gallery hover via CSS */
+    .rv img[data-hover]{transition:transform .6s,filter .6s}
+    .rv > div[data-scroll-booking]:hover img{transform:scale(1.08);filter:brightness(1)!important}
+  
+    .ig-link:hover{background:rgba(201,169,110,.08)!important}
   </style>
 </head>
 <body>
@@ -317,9 +325,9 @@
   </ul>
   <div class="nav__right">
     <div class="lang">
-      <button onclick="L('en')" id="l-en" class="on">EN</button>
-      <button onclick="L('es')" id="l-es">ES</button>
-      <button onclick="L('fr')" id="l-fr">FR</button>
+      <button data-language="en" id="l-en" class="on">EN</button>
+      <button data-language="es" id="l-es">ES</button>
+      <button data-language="fr" id="l-fr">FR</button>
     </div>
     <a href="#booking" class="btn-cta" data-k="nc">Book Now</a>
     <button class="hbg" id="hbg" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -373,12 +381,12 @@
     <p class="body" data-k="sb">From intimate romantic dinners to grand weddings — every experience is designed exclusively for you.</p>
   </div>
   <div class="svcs__g">
-    <div class="svc rv"><div class="svc__n">01</div><div class="svc__ico">🍽</div><h3 class="svc__t" data-k="s1t">Private Villa Dinner</h3><p class="svc__b" data-k="s1b">Fine dining at your villa. Custom menu, full mise en place, cinematic service from first to last course.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
-    <div class="svc rv"><div class="svc__n">02</div><div class="svc__ico">❤️</div><h3 class="svc__t" data-k="s2t">Romantic Dinner</h3><p class="svc__b" data-k="s2b">Candles, flowers, personalized menu and a night to remember. Anniversaries, proposals, special moments.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
-    <div class="svc rv"><div class="svc__n">03</div><div class="svc__ico">💍</div><h3 class="svc__t" data-k="s3t">Wedding Expert</h3><p class="svc__b" data-k="s3b">Full culinary coordination for your wedding. Custom menus, full service team, cocktail hour through dessert.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
-    <div class="svc rv"><div class="svc__n">04</div><div class="svc__ico">👨‍🍳</div><h3 class="svc__t" data-k="s4t">Cooking Classes</h3><p class="svc__b" data-k="s4b">Learn authentic Mexican techniques with a professional chef. Private lessons at your villa for 2–10 guests. Unforgettable.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
-    <div class="svc rv"><div class="svc__n">05</div><div class="svc__ico">⛵</div><h3 class="svc__t" data-k="s5t">Yacht Chef</h3><p class="svc__b" data-k="s5b">Gourmet cuisine at sea. Menus designed for Banderas Bay sailing adventures. Fully equipped onboard service.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
-    <div class="svc rv"><div class="svc__n">06</div><div class="svc__ico">✨</div><h3 class="svc__t" data-k="s6t">VIP Events & Multi-Day</h3><p class="svc__b" data-k="s6b">Corporate retreats, family reunions, multi-day stays. The chef integrates into your rhythm for the full vacation.</p><span class="svc__a" onclick="scrollTo('booking')" data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">01</div><div class="svc__ico">🍽</div><h3 class="svc__t" data-k="s1t">Private Villa Dinner</h3><p class="svc__b" data-k="s1b">Fine dining at your villa. Custom menu, full mise en place, cinematic service from first to last course.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">02</div><div class="svc__ico">❤️</div><h3 class="svc__t" data-k="s2t">Romantic Dinner</h3><p class="svc__b" data-k="s2b">Candles, flowers, personalized menu and a night to remember. Anniversaries, proposals, special moments.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">03</div><div class="svc__ico">💍</div><h3 class="svc__t" data-k="s3t">Wedding Expert</h3><p class="svc__b" data-k="s3b">Full culinary coordination for your wedding. Custom menus, full service team, cocktail hour through dessert.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">04</div><div class="svc__ico">👨‍🍳</div><h3 class="svc__t" data-k="s4t">Cooking Classes</h3><p class="svc__b" data-k="s4b">Learn authentic Mexican techniques with a professional chef. Private lessons at your villa for 2–10 guests. Unforgettable.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">05</div><div class="svc__ico">⛵</div><h3 class="svc__t" data-k="s5t">Yacht Chef</h3><p class="svc__b" data-k="s5b">Gourmet cuisine at sea. Menus designed for Banderas Bay sailing adventures. Fully equipped onboard service.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
+    <div class="svc rv"><div class="svc__n">06</div><div class="svc__ico">✨</div><h3 class="svc__t" data-k="s6t">VIP Events & Multi-Day</h3><p class="svc__b" data-k="s6b">Corporate retreats, family reunions, multi-day stays. The chef integrates into your rhythm for the full vacation.</p><span class="svc__a" data-scroll-booking data-k="sa">Book now →</span></div>
   </div>
 </section>
 
@@ -469,21 +477,17 @@
     <h2 class="ttl" data-k="gt">A feast <em>for the eyes</em></h2>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:1200px;margin:0 auto" class="rv">
-    <div style="height:260px;overflow:hidden;cursor:pointer" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">
-      <img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s" onmouseover="this.style.transform='scale(1.08)';this.style.filter='brightness(1)'" onmouseout="this.style.transform='';this.style.filter='brightness(.78)'" alt="Chef Franko dish" loading="lazy"/>
+    <div style="height:260px;overflow:hidden;cursor:pointer" data-scroll-booking><img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s"  alt="Chef Franko dish" loading="lazy"/>
     </div>
-    <div style="height:260px;overflow:hidden;cursor:pointer" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">
-      <img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a58d7c21d_b14b67a7-7fa7-4c05-8514-6836b5470b56.png" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s" onmouseover="this.style.transform='scale(1.08)';this.style.filter='brightness(1)'" onmouseout="this.style.transform='';this.style.filter='brightness(.78)'" alt="Chef Franko dish" loading="lazy"/>
+    <div style="height:260px;overflow:hidden;cursor:pointer" data-scroll-booking><img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a58d7c21d_b14b67a7-7fa7-4c05-8514-6836b5470b56.png" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s"  alt="Chef Franko dish" loading="lazy"/>
     </div>
-    <div style="height:260px;overflow:hidden;cursor:pointer" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">
-      <img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s" onmouseover="this.style.transform='scale(1.08)';this.style.filter='brightness(1)'" onmouseout="this.style.transform='';this.style.filter='brightness(.78)'" alt="Chef Franko dish" loading="lazy"/>
+    <div style="height:260px;overflow:hidden;cursor:pointer" data-scroll-booking><img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s"  alt="Chef Franko dish" loading="lazy"/>
     </div>
-    <div style="height:260px;overflow:hidden;cursor:pointer" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">
-      <img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s" onmouseover="this.style.transform='scale(1.08)';this.style.filter='brightness(1)'" onmouseout="this.style.transform='';this.style.filter='brightness(.78)'" alt="Chef Franko dish" loading="lazy"/>
+    <div style="height:260px;overflow:hidden;cursor:pointer" data-scroll-booking><img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/a99e76ad7_AOOB9619.JPG" style="width:100%;height:100%;object-fit:cover;filter:brightness(.78);transition:transform .6s,filter .6s"  alt="Chef Franko dish" loading="lazy"/>
     </div>
   </div>
   <div style="text-align:center;margin-top:2.5rem">
-    <a href="https://instagram.com/franko_s83" target="_blank" style="font-family:var(--sans);font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:.75rem 2rem;border-radius:2px;display:inline-block;transition:all .4s" onmouseover="this.style.background='rgba(201,169,110,.08)'" onmouseout="this.style.background='none'">Follow @franko_s83 on Instagram →</a>
+    <a href="https://instagram.com/franko_s83" target="_blank" style="font-family:var(--sans);font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:.75rem 2rem;border-radius:2px;display:inline-block;transition:all .4s" class="ig-link">Follow @franko_s83 on Instagram →</a>
   </div>
 </section>
 
@@ -538,7 +542,7 @@
         <div class="ci"><input type="checkbox" id="cs" required/><span><label for="cs">I consent to Chef 4 You by Franko contacting me to handle my inquiry. *</label></span></div>
         <div class="ci"><input type="checkbox" id="cm"/><span><label for="cm">I agree to receive marketing communications by email.</label></span></div>
       </div>
-      <button type="button" class="btn-sub" id="fsub" onclick="submitForm()" data-k="fbt">Check Availability</button>
+      <button type="submit" class="btn-sub" id="fsub" data-k="fbt">Check Availability</button>
       <p id="fSt"></p>
     </form>
   </div>
@@ -571,7 +575,7 @@
 </a>
 
 <!-- AI CHAT con Gemini -->
-<button class="fab" id="fab" onclick="openChat()">
+<button class="fab" id="fab" aria-label="Open chat">
   <div class="fdot"></div>
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   <span id="fabTxt">Chat with AI</span>
@@ -583,18 +587,18 @@
       <div class="ch-av">🍽</div>
       <div><div class="ch-nm">Chef 4 You Assistant</div><div class="ch-st">Online now</div></div>
     </div>
-    <button class="ch-x" onclick="closeChat()">✕</button>
+    <button class="ch-x" data-close-chat aria-label="Close chat">✕</button>
   </div>
   <div class="ch-msgs" id="chMsgs"></div>
   <div class="chips" id="chips">
-    <button class="chip" onclick="useChip(this)">Pricing</button>
-    <button class="chip" onclick="useChip(this)">Availability</button>
-    <button class="chip" onclick="useChip(this)">Menu ideas</button>
-    <button class="chip" onclick="useChip(this)">Cooking class</button>
+    <button class="chip" data-chat-chip>Pricing</button>
+    <button class="chip" data-chat-chip>Availability</button>
+    <button class="chip" data-chat-chip>Menu ideas</button>
+    <button class="chip" data-chat-chip>Cooking class</button>
   </div>
   <div class="ch-inp">
-    <input class="ch-in" id="chIn" type="text" placeholder="Ask anything…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}"/>
-    <button class="ch-send" id="chSend" onclick="sendMsg()">
+    <input class="ch-in" id="chIn" type="text" placeholder="Ask anything…" autocomplete="off" />
+    <button class="ch-send" id="chSend" aria-label="Send message">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
   </div>
@@ -760,5 +764,16 @@ async function submitForm(){
   btn.disabled=false;btn.textContent=T[lang].fbt||T.en.fbt;
 }
 </script>
+
+<!-- Cookie Consent Banner -->
+<div id="cb" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(8,8,8,.96);backdrop-filter:blur(10px);border-top:1px solid rgba(201,169,110,.2);padding:1rem 1.5rem;display:none;flex-wrap:wrap;align-items:center;justify-content:center;gap:1rem;font-family:'Jost',system-ui,sans-serif">
+  <p style="font-size:.78rem;color:rgba(255,255,255,.7);margin:0;max-width:600px;text-align:center">
+    <span data-k="cb_txt">Usamos cookies para mejorar tu experiencia y analizar el tráfico. ¿Aceptas el uso de analytics?</span>
+  </p>
+  <div style="display:flex;gap:.6rem">
+    <button id="cb-yes" style="background:#c9a96e;color:#080808;border:none;font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.6rem 1.4rem;border-radius:2px;cursor:pointer">Aceptar</button>
+    <button id="cb-no" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.68rem;font-weight:500;padding:.6rem 1.2rem;border-radius:2px;cursor:pointer">Rechazar</button>
+  </div>
+</div>
 </body>
 </html>
