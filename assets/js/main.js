@@ -1,10 +1,27 @@
-﻿(function(){
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
-  window.gtag('js', new Date());
-  window.gtag('config', 'G-X4T0SBCQVF');
-  window.gtag('config', 'GT-P8266HD5');
-}());
+﻿var LANG_STORAGE_KEY='chef4you_lang';
+var ANALYTICS_CONSENT_KEY='chef4you_analytics_consent';
+var analyticsEnabled=false;
+
+function getStoredValue(key){
+  try{return window.localStorage.getItem(key)}catch(_){return null}
+}
+function setStoredValue(key,value){
+  try{window.localStorage.setItem(key,value)}catch(_){}
+}
+
+function enableAnalytics(){
+  if(analyticsEnabled)return;
+  analyticsEnabled=true;
+  var script=document.createElement('script');
+  script.async=true;
+  script.src='https://www.googletagmanager.com/gtag/js?id=G-X4T0SBCQVF';
+  document.head.appendChild(script);
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};
+  window.gtag('js',new Date());
+  window.gtag('config','G-X4T0SBCQVF');
+  window.gtag('config','GT-P8266HD5');
+}
 /* NAV */
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>60));
 
@@ -35,7 +52,7 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
-var lang='en';
+var lang='es';
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -110,6 +127,7 @@ var T={
 
 function L(l){
   lang=l;
+  setStoredValue(LANG_STORAGE_KEY,l);
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -120,9 +138,96 @@ function L(l){
   document.querySelectorAll('.chip').forEach((c,i)=>{if(chips[i])c.textContent=chips[i]});
   document.getElementById('fabTxt').textContent=l==='fr'?"Chat IA":l==='es'?'Chat con IA':'Chat with AI';
   document.querySelector('.ch-in').placeholder=l==='fr'?'Votre question…':l==='es'?'Tu pregunta…':'Ask anything…';
+  applyLocalizedFormCopy(l);
+  updateAnalyticsConsentCopy(l);
 }
 
 function scrollTo(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+
+function applyLocalizedFormCopy(l){
+  var copy={
+    en:{
+      preferredBlank:'— Select —',
+      channel:{whatsapp:'WhatsApp',email:'Email',phone:'Phone call'},
+      experience:{villa_dinner:'Private Villa Dinner',romantic:'Romantic Dinner',wedding:'Wedding / Event',cooking_class:'Cooking Class',yacht:'Yacht Chef',multiday:'Multi-Day Stay',other:'Other'},
+      serviceArea:{puerto_vallarta:'Puerto Vallarta',punta_mita:'Punta Mita',nuevo_nayarit:'Nuevo Nayarit',riviera_nayarit:'Riviera Nayarit',other:'Other'},
+      privacy:'I have read and accept the <a href="/politica-privacidad.html">privacy policy</a>. *',
+      contact:'I consent to Chef 4 You by Franko contacting me to handle my inquiry. *',
+      marketing:'I agree to receive marketing communications by email.'
+    },
+    es:{
+      preferredBlank:'— Seleccionar —',
+      channel:{whatsapp:'WhatsApp',email:'Correo',phone:'Llamada'},
+      experience:{villa_dinner:'Cena Privada en Villa',romantic:'Cena Romántica',wedding:'Boda / Evento',cooking_class:'Clase de Cocina',yacht:'Chef en Yate',multiday:'Estadía Multi-Día',other:'Otro'},
+      serviceArea:{puerto_vallarta:'Puerto Vallarta',punta_mita:'Punta Mita',nuevo_nayarit:'Nuevo Nayarit',riviera_nayarit:'Riviera Nayarit',other:'Otra'},
+      privacy:'He leído y acepto la <a href="/politica-privacidad.html">política de privacidad</a>. *',
+      contact:'Autorizo a Chef 4 You by Franko a contactarme para atender mi solicitud. *',
+      marketing:'Acepto recibir comunicaciones de marketing por correo electrónico.'
+    },
+    fr:{
+      preferredBlank:'— Sélectionner —',
+      channel:{whatsapp:'WhatsApp',email:'E-mail',phone:'Appel'},
+      experience:{villa_dinner:'Dîner Privé en Villa',romantic:'Dîner Romantique',wedding:'Mariage / Événement',cooking_class:'Cours de Cuisine',yacht:'Chef sur Yacht',multiday:'Séjour Multi-Jours',other:'Autre'},
+      serviceArea:{puerto_vallarta:'Puerto Vallarta',punta_mita:'Punta Mita',nuevo_nayarit:'Nuevo Nayarit',riviera_nayarit:'Riviera Nayarit',other:'Autre'},
+      privacy:'J’ai lu et j’accepte la <a href="/politica-privacidad.html">politique de confidentialité</a>. *',
+      contact:'J’autorise Chef 4 You by Franko à me contacter pour traiter ma demande. *',
+      marketing:'J’accepte de recevoir des communications marketing par e-mail.'
+    }
+  };
+  var t=copy[l]||copy.en;
+  var setOptionText=function(selectId,value,text){
+    var opt=document.querySelector('#'+selectId+' option[value="'+value+'"]');
+    if(opt)opt.textContent=text;
+  };
+  setOptionText('fc','',t.preferredBlank);
+  Object.keys(t.channel).forEach(function(key){setOptionText('fc',key,t.channel[key])});
+  setOptionText('fx','',t.preferredBlank);
+  Object.keys(t.experience).forEach(function(key){setOptionText('fx',key,t.experience[key])});
+  setOptionText('fz','',t.preferredBlank);
+  Object.keys(t.serviceArea).forEach(function(key){setOptionText('fz',key,t.serviceArea[key])});
+  var privacyLabel=document.querySelector('label[for="cp"]');
+  if(privacyLabel)privacyLabel.innerHTML=t.privacy;
+  var contactLabel=document.querySelector('label[for="cs"]');
+  if(contactLabel)contactLabel.innerHTML=t.contact;
+  var marketingLabel=document.querySelector('label[for="cm"]');
+  if(marketingLabel)marketingLabel.textContent=t.marketing;
+}
+
+function updateAnalyticsConsentCopy(l){
+  var copy={
+    en:{text:'We use analytics to improve your experience. It only runs after you accept.',accept:'Accept',reject:'Reject'},
+    es:{text:'Usamos analítica para mejorar tu experiencia. Solo se activará si aceptas.',accept:'Aceptar',reject:'Rechazar'},
+    fr:{text:'Nous utilisons des analyses pour améliorer votre expérience. Elles s’activent uniquement après votre accord.',accept:'Accepter',reject:'Refuser'}
+  }[l]||{text:'We use analytics to improve your experience. It only runs after you accept.',accept:'Accept',reject:'Reject'};
+  var text=document.getElementById('analyticsConsentText');
+  if(text)text.textContent=copy.text;
+  var accept=document.getElementById('analyticsAccept');
+  if(accept)accept.textContent=copy.accept;
+  var reject=document.getElementById('analyticsReject');
+  if(reject)reject.textContent=copy.reject;
+}
+
+function setAnalyticsConsent(state){
+  setStoredValue(ANALYTICS_CONSENT_KEY,state);
+  if(state==='granted')enableAnalytics();
+  var banner=document.getElementById('analyticsConsent');
+  if(banner)banner.hidden=true;
+}
+
+function initAnalyticsConsent(){
+  var state=getStoredValue(ANALYTICS_CONSENT_KEY);
+  if(state==='granted'){
+    enableAnalytics();
+    return;
+  }
+  var banner=document.getElementById('analyticsConsent');
+  if(banner)banner.hidden=false;
+}
+
+function makeIdempotencyKey(){
+  if(window.crypto&&window.crypto.randomUUID)return window.crypto.randomUUID();
+  return 'lead-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+}
 
 /* CHAT with Gemini AI */
 var hist=[],busy=false,opened=false;
@@ -215,14 +320,25 @@ async function submitForm(){
   }
   btn.disabled=true;btn.textContent=lang==='en'?'Sending…':lang==='fr'?'Envoi…':'Enviando…';
   st.className='';st.textContent='';
-  var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:document.getElementById('fg2').value,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
+  var guestCountValue=document.getElementById('fg2').value;
+  var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
+  var idempotencyKey=makeIdempotencyKey();
   try{
-    var r=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
-    if(r.ok){
-      st.className='ok';
-      st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
-      document.getElementById('bookForm').reset();
-    }else throw new Error(r.status);
+    var sent=false;
+    try{
+      var primary=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+      if(primary.ok)sent=true;
+      else throw new Error('primary_http_'+primary.status);
+    }catch(primaryError){
+      logFailure('lead_submission_primary',primaryError,{language:lang,preferredChannel:fc});
+      var fallback=await fetchWithRetry('/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+      if(fallback.ok)sent=true;
+      else throw new Error('fallback_http_'+fallback.status);
+    }
+    if(!sent)throw new Error('lead_not_sent');
+    st.className='ok';
+    st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
+    document.getElementById('bookForm').reset();
   }catch(e){
     logFailure('lead_submission',e,{language:lang,preferredChannel:fc});
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
@@ -234,9 +350,20 @@ async function submitForm(){
 
 document.addEventListener('DOMContentLoaded',function(){
   var requestedLanguage=new URLSearchParams(window.location.search).get('lang');
-  if(['en','es','fr'].includes(requestedLanguage))L(requestedLanguage);
+  var storedLanguage=getStoredValue(LANG_STORAGE_KEY);
+  var initialLanguage=['en','es','fr'].includes(requestedLanguage)?requestedLanguage:(['en','es','fr'].includes(storedLanguage)?storedLanguage:'es');
+  L(initialLanguage);
+  initAnalyticsConsent();
   document.querySelectorAll('[data-language]').forEach(function(button){button.addEventListener('click',function(){L(button.dataset.language)})});
-  document.querySelectorAll('[data-scroll-booking]').forEach(function(item){item.addEventListener('click',function(){document.getElementById('booking').scrollIntoView({behavior:'smooth'})})});
+  document.querySelectorAll('[data-scroll-booking]').forEach(function(item){
+    item.addEventListener('click',function(){document.getElementById('booking').scrollIntoView({behavior:'smooth'})});
+    item.addEventListener('keydown',function(event){
+      if(event.key==='Enter'||event.key===' '){
+        event.preventDefault();
+        document.getElementById('booking').scrollIntoView({behavior:'smooth'});
+      }
+    });
+  });
   document.getElementById('q_calc').addEventListener('click',calcQuote);
   document.getElementById('bookForm').addEventListener('submit',function(event){event.preventDefault();submitForm()});
   document.getElementById('fab').addEventListener('click',openChat);
@@ -244,4 +371,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('[data-chat-chip]').forEach(function(button){button.addEventListener('click',function(){useChip(button)})});
   document.getElementById('chSend').addEventListener('click',sendMsg);
   document.getElementById('chIn').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
+  document.getElementById('analyticsAccept').addEventListener('click',function(){setAnalyticsConsent('granted')});
+  document.getElementById('analyticsReject').addEventListener('click',function(){setAnalyticsConsent('denied')});
 });
