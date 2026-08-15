@@ -853,21 +853,22 @@ document.addEventListener('DOMContentLoaded',function(){
     document.getElementById('cb').style.display='none';
   }
   function denyConsent(){
+    gtag('consent','update',{'ad_storage':'denied','analytics_storage':'denied'});
     try{localStorage.setItem('c4y_consent','no')}catch(e){}
     document.getElementById('cb').style.display='none';
   }
-  var dnt=navigator.doNotTrack;
+  var dnt=String(navigator.doNotTrack||window.doNotTrack||'')==='1';
   if(consentGiven==='yes'){
     grantConsent();
-  }else if(consentGiven==='no'||dnt==='1'){
-    document.getElementById('cb').style.display='none';
+  }else if(consentGiven==='no'||dnt){
+    denyConsent();
   }else{
     document.getElementById('cb').style.display='flex';
   }
   document.getElementById('cb-yes').addEventListener('click',grantConsent);
   document.getElementById('cb-no').addEventListener('click',denyConsent);
 
-  if(!requestedLanguage){L(lang);}
+  if(!requestedLanguage||!['en','es','fr'].includes(requestedLanguage)){L(lang);}
 });
 </script>
 
