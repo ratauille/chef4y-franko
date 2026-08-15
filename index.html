@@ -534,7 +534,7 @@
       </div>
       <div class="fg" style="margin-top:.15rem"><label data-k="fm">Dietary preferences / special requests</label><textarea id="fm" maxlength="2000" placeholder="Allergies, dietary restrictions, the special occasion..."></textarea></div>
       <div class="consents">
-        <div class="ci"><input type="checkbox" id="cp" required/><span><label for="cp">I have read and accept the <a href="#">privacy policy</a>. *</label></span></div>
+        <div class="ci"><input type="checkbox" id="cp" required/><span><label for="cp">I have read and accept the <a href="politica-privacidad.html">privacy policy</a>. *</label></span></div>
         <div class="ci"><input type="checkbox" id="cs" required/><span><label for="cs">I consent to Chef 4 You by Franko contacting me to handle my inquiry. *</label></span></div>
         <div class="ci"><input type="checkbox" id="cm"/><span><label for="cm">I agree to receive marketing communications by email.</label></span></div>
       </div>
@@ -703,47 +703,29 @@ function scrollTo(id){document.getElementById(id).scrollIntoView({behavior:'smoo
 
 /* CHAT with Gemini AI */
 var hist=[],busy=false,opened=false;
-
-function openChat(){
-  document.getElementById('chat').classList.add('open');
-  document.getElementById('fab').classList.add('gone');
-  if(!opened){
-    opened=true;
-    setTimeout(()=>addMsg('b',T[lang].chat_hi||T.en.chat_hi),350);
+var CHAT_ENDPOINT='https://base44.app/api/apps/6a717d7af1768f8448815281/functions/chatAssistant';
+function wait(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
+async function fetchWithRetry(url,options,attempts,timeoutMs){
+  options=options||{};attempts=attempts||2;timeoutMs=timeoutMs||10000;var lastError;
+  for(var attempt=0;attempt<attempts;attempt++){
+    var controller=new AbortController();var timer=setTimeout(function(){controller.abort()},timeoutMs);
+    try{var response=await fetch(url,Object.assign({},options,{signal:controller.signal}));if(response.ok||response.status<500)return response;throw new Error('HTTP '+response.status)}
+    catch(error){lastError=error;if(attempt<attempts-1)await wait(350*Math.pow(2,attempt))}
+    finally{clearTimeout(timer)}
   }
+  throw lastError||new Error('Request failed');
 }
-function closeChat(){
-  document.getElementById('chat').classList.remove('open');
-  document.getElementById('fab').classList.remove('gone');
-}
-function addMsg(r,txt){
-  var w=document.getElementById('chMsgs');
-  var el=document.createElement('div');
-  el.className='msg '+(r==='b'?'mb':'mm');
-  el.textContent=txt;
-  w.appendChild(el);
-  w.scrollTop=w.scrollHeight;
-  return el;
-}
-function useChip(btn){btn.disabled=true;doSend(btn.textContent)}
+function openChat(){document.getElementById('chat').classList.add('open');document.getElementById('fab').classList.add('gone');if(!opened){opened=true;setTimeout(function(){addMsg('b',T[lang].chat_hi||T.en.chat_hi)},350)}}
+function closeChat(){document.getElementById('chat').classList.remove('open');document.getElementById('fab').classList.remove('gone')}
+function addMsg(r,txt){var w=document.getElementById('chMsgs');var el=document.createElement('div');el.className='msg '+(r==='b'?'mb':'mm');el.textContent=txt;w.appendChild(el);w.scrollTop=w.scrollHeight;return el}
+function useChip(btn){if(busy)return;btn.disabled=true;doSend(btn.textContent)}
 function sendMsg(){var i=document.getElementById('chIn');var t=i.value.trim();if(!t||busy)return;i.value='';doSend(t)}
-
-/* CHAT — uses Base44 backend (Gemini flash-latest, 3 idiomas) */
 async function doSend(txt){
-  if(busy)return;busy=true;
-  document.getElementById('chSend').disabled=true;
-  hist.push({role:'user',content:txt});
-  addMsg('u',txt);
-  var typing=addMsg('b','…');typing.classList.add('mt');
-  try{
-    /* chat assistant disabled - not deployed */
-    var d=await r.json();
-    var reply=d.reply||d.message||d.content||T[lang].chat_err||T.en.chat_err;
-    typing.remove();addMsg('b',reply);hist.push({role:'assistant',content:reply});
-  }catch(e){typing.remove();addMsg('b',T[lang].chat_err||T.en.chat_err)}
-  busy=false;document.getElementById('chSend').disabled=false;
+  if(busy)return;busy=true;var send=document.getElementById('chSend');send.disabled=true;hist.push({role:'user',content:txt});addMsg('u',txt);var typing=addMsg('b','…');typing.classList.add('mt');
+  try{var r=await fetchWithRetry(CHAT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,lang:lang,context:'private_chef_puerto_vallarta'})},2,10000);var d=await r.json();var reply=d.reply||d.message||d.content||T[lang].chat_err||T.en.chat_err;typing.remove();addMsg('b',reply);hist.push({role:'assistant',content:reply})}
+  catch(e){console.error('[chat]',{message:e&&e.message?e.message:String(e),lang:lang,at:new Date().toISOString()});typing.remove();addMsg('b',T[lang].chat_err||T.en.chat_err)}
+  finally{busy=false;send.disabled=false;document.querySelectorAll('.chip').forEach(function(chip){chip.disabled=false})}
 }
-
 /* FORM */
 async function submitForm(){
   var btn=document.getElementById('fsub');
@@ -779,10 +761,4 @@ async function submitForm(){
 }
 </script>
 </body>
-</html>    <div style="margin-top:2rem;border-radius:4px;overflow:hidden;position:relative">
-      <img src="https://media.base44.com/images/public/6a717d7af1768f8448815281/59b37247d_Gemini_Generated_Image_a1su9fa1su9fa1su.png" alt="Chef Franko y su equipo" style="width:100%;height:210px;object-fit:cover;object-position:center top;filter:brightness(.92)"/>
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:.65rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,.7))">
-        <p style="font-family:var(--sans);font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)" data-k="atl">The Team · Puerto Vallarta</p>
-      </div>
-    </div>
-
+</html>

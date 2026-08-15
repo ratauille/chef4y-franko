@@ -181,7 +181,7 @@ async function doSend(txt){
   addMsg('u',txt);
   var typing=addMsg('b','…');typing.classList.add('mt');
   try{
-    var r=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/chatAssistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,lang:lang,context:'private_chef_puerto_vallarta'})},{attempts:3,timeout:8000});
+    var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/chatAssistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,lang:lang,context:'private_chef_puerto_vallarta'})},{attempts:3,timeout:8000});
     var d=await r.json();
     var reply=d.reply||d.message||d.content||T[lang].chat_err||T.en.chat_err;
     typing.remove();addMsg('b',reply);hist.push({role:'assistant',content:reply});
@@ -217,7 +217,7 @@ async function submitForm(){
   st.className='';st.textContent='';
   var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:document.getElementById('fg2').value,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
   try{
-    var r=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+    var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
     if(r.ok){
       st.className='ok';
       st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
