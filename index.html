@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -26,8 +26,8 @@
   <link rel="canonical" href="https://chef4youbyfranko.com/"/>
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="Chef 4 You by Franko Salgado"/>
-  <meta property="og:locale" content="en_US"/>
-  <meta property="og:locale:alternate" content="es_MX"/>
+  <meta property="og:locale" content="es_MX"/>
+  <meta property="og:locale:alternate" content="en_US"/>
   <meta property="og:locale:alternate" content="fr_FR"/>
   <meta property="og:url" content="https://chef4youbyfranko.com/"/>
   <meta property="og:title" content="Private Chef Puerto Vallarta | Chef 4 You by Franko Salgado"/>
@@ -654,7 +654,7 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
-var lang='en';
+var lang=localStorage.getItem('c4y_lang')||'es';
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -729,6 +729,7 @@ var T={
 
 function L(l){
   lang=l;
+  try{localStorage.setItem('c4y_lang',l)}catch(e){}
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -801,6 +802,74 @@ async function submitForm(){
   }
   btn.disabled=false;btn.textContent=T[lang].fbt||T.en.fbt;
 }
+
+document.addEventListener('DOMContentLoaded',function(){
+  var requestedLanguage=new URLSearchParams(window.location.search).get('lang');
+  if(['en','es','fr'].includes(requestedLanguage)){L(requestedLanguage);}
+
+  document.querySelectorAll('[data-language]').forEach(function(button){
+    button.addEventListener('click',function(){L(button.dataset.language);});
+  });
+
+  document.querySelectorAll('[data-scroll-booking]').forEach(function(item){
+    item.addEventListener('click',function(){document.getElementById('booking').scrollIntoView({behavior:'smooth'});});
+  });
+
+  var qCalc=document.getElementById('q_calc');
+  if(qCalc)qCalc.addEventListener('click',calcQuote);
+
+  document.getElementById('bookForm').addEventListener('submit',function(event){event.preventDefault();submitForm();});
+
+  document.getElementById('fab').addEventListener('click',openChat);
+
+  var closeBtn=document.querySelector('[data-close-chat]');
+  if(closeBtn)closeBtn.addEventListener('click',closeChat);
+
+  document.querySelectorAll('[data-chat-chip]').forEach(function(button){
+    button.addEventListener('click',function(){useChip(button);});
+  });
+
+  document.getElementById('chSend').addEventListener('click',sendMsg);
+
+  document.getElementById('chIn').addEventListener('keydown',function(event){
+    if(event.key==='Enter'){event.preventDefault();sendMsg();}
+  });
+
+  var hbg=document.getElementById('hbg');
+  if(hbg){
+    hbg.addEventListener('click',function(){
+      var nl=document.getElementById('navLinks');
+      if(nl)nl.style.display=nl.style.display==='flex'?'none':'flex';
+    });
+  }
+
+  /* ANALYTICS CONSENT */
+  var consentGiven=localStorage.getItem('c4y_consent');
+  function grantConsent(){
+    gtag('consent','update',{'ad_storage':'granted','analytics_storage':'granted'});
+    gtag('config','G-X4T0SBCQVF',{anonymize_ip:true});
+    gtag('config','GT-P8266HD5');
+    try{localStorage.setItem('c4y_consent','yes')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  function denyConsent(){
+    gtag('consent','update',{'ad_storage':'denied','analytics_storage':'denied'});
+    try{localStorage.setItem('c4y_consent','no')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  var dnt=String(navigator.doNotTrack||window.doNotTrack||'')==='1';
+  if(consentGiven==='yes'){
+    grantConsent();
+  }else if(consentGiven==='no'||dnt){
+    denyConsent();
+  }else{
+    document.getElementById('cb').style.display='flex';
+  }
+  document.getElementById('cb-yes').addEventListener('click',grantConsent);
+  document.getElementById('cb-no').addEventListener('click',denyConsent);
+
+  if(!requestedLanguage||!['en','es','fr'].includes(requestedLanguage)){L(lang);}
+});
 </script>
 
 <!-- Cookie Consent Banner -->
