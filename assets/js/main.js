@@ -35,7 +35,7 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
-var lang='en';
+var lang=localStorage.getItem('c4y_lang')||'es';
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -110,6 +110,7 @@ var T={
 
 function L(l){
   lang=l;
+  try{localStorage.setItem('c4y_lang',l)}catch(e){}
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -244,4 +245,30 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('[data-chat-chip]').forEach(function(button){button.addEventListener('click',function(){useChip(button)})});
   document.getElementById('chSend').addEventListener('click',sendMsg);
   document.getElementById('chIn').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
+
+  /* ANALYTICS CONSENT */
+  var consentGiven=localStorage.getItem('c4y_consent');
+  function grantConsent(){
+    gtag('consent','update',{'ad_storage':'granted','analytics_storage':'granted'});
+    gtag('config','G-X4T0SBCQVF',{anonymize_ip:true});
+    gtag('config','GT-P8266HD5');
+    try{localStorage.setItem('c4y_consent','yes')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  function denyConsent(){
+    try{localStorage.setItem('c4y_consent','no')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  if(consentGiven==='yes'){
+    grantConsent();
+  }else if(consentGiven==='no'){
+    document.getElementById('cb').style.display='none';
+  }else{
+    document.getElementById('cb').style.display='flex';
+  }
+  document.getElementById('cb-yes').addEventListener('click',grantConsent);
+  document.getElementById('cb-no').addEventListener('click',denyConsent);
+
+  /* Aplicar idioma guardado al cargar (si no viene en URL) */
+  if(!requestedLanguage){L(lang);}
 });
