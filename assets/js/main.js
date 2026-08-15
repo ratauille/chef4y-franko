@@ -1,5 +1,6 @@
 ﻿var LANG_STORAGE_KEY='chef4you_lang';
 var ANALYTICS_CONSENT_KEY='chef4you_analytics_consent';
+var SUPPORTED_LANGS=['en','es','fr'];
 var analyticsEnabled=false;
 
 function getStoredValue(key){
@@ -133,7 +134,7 @@ function L(l){
     var k=el.getAttribute('data-k');
     if(T[l]&&T[l][k]!==undefined)el.innerHTML=T[l][k];
   });
-  ['en','es','fr'].forEach(x=>document.getElementById('l-'+x).classList.toggle('on',x===l));
+  SUPPORTED_LANGS.forEach(x=>document.getElementById('l-'+x).classList.toggle('on',x===l));
   var chips=l==='fr'?['Tarifs','Disponibilité','Menu','Cours']:l==='es'?['Precios','Disponibilidad','Menú','Clases']:['Pricing','Availability','Menu ideas','Cooking class'];
   document.querySelectorAll('.chip').forEach((c,i)=>{if(chips[i])c.textContent=chips[i]});
   document.getElementById('fabTxt').textContent=l==='fr'?"Chat IA":l==='es'?'Chat con IA':'Chat with AI';
@@ -169,9 +170,9 @@ function applyLocalizedFormCopy(l){
       channel:{whatsapp:'WhatsApp',email:'E-mail',phone:'Appel'},
       experience:{villa_dinner:'Dîner Privé en Villa',romantic:'Dîner Romantique',wedding:'Mariage / Événement',cooking_class:'Cours de Cuisine',yacht:'Chef sur Yacht',multiday:'Séjour Multi-Jours',other:'Autre'},
       serviceArea:{puerto_vallarta:'Puerto Vallarta',punta_mita:'Punta Mita',nuevo_nayarit:'Nuevo Nayarit',riviera_nayarit:'Riviera Nayarit',other:'Autre'},
-      privacy:'J’ai lu et j’accepte la <a href="/politica-privacidad.html">politique de confidentialité</a>. *',
-      contact:'J’autorise Chef 4 You by Franko à me contacter pour traiter ma demande. *',
-      marketing:'J’accepte de recevoir des communications marketing par e-mail.'
+      privacy:'J\'ai lu et j\'accepte la <a href="/politica-privacidad.html">politique de confidentialité</a>. *',
+      contact:'J\'autorise Chef 4 You by Franko à me contacter pour traiter ma demande. *',
+      marketing:'J\'accepte de recevoir des communications marketing par e-mail.'
     }
   };
   var t=copy[l]||copy.en;
@@ -190,14 +191,14 @@ function applyLocalizedFormCopy(l){
   var contactLabel=document.querySelector('label[for="cs"]');
   if(contactLabel)contactLabel.innerHTML=t.contact;
   var marketingLabel=document.querySelector('label[for="cm"]');
-  if(marketingLabel)marketingLabel.textContent=t.marketing;
+  if(marketingLabel)marketingLabel.innerHTML=t.marketing;
 }
 
 function updateAnalyticsConsentCopy(l){
   var copy={
     en:{text:'We use analytics to improve your experience. It only runs after you accept.',accept:'Accept',reject:'Reject'},
     es:{text:'Usamos analítica para mejorar tu experiencia. Solo se activará si aceptas.',accept:'Aceptar',reject:'Rechazar'},
-    fr:{text:'Nous utilisons des analyses pour améliorer votre expérience. Elles s’activent uniquement après votre accord.',accept:'Accepter',reject:'Refuser'}
+    fr:{text:'Nous utilisons des analyses pour améliorer votre expérience. Elles s\'activent uniquement après votre accord.',accept:'Accepter',reject:'Refuser'}
   }[l]||{text:'We use analytics to improve your experience. It only runs after you accept.',accept:'Accept',reject:'Reject'};
   var text=document.getElementById('analyticsConsentText');
   if(text)text.textContent=copy.text;
@@ -220,6 +221,7 @@ function initAnalyticsConsent(){
     enableAnalytics();
     return;
   }
+  if(state==='denied')return;
   var banner=document.getElementById('analyticsConsent');
   if(banner)banner.hidden=false;
 }
@@ -324,23 +326,23 @@ async function submitForm(){
   var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
   var idempotencyKey=makeIdempotencyKey();
   try{
-    var sent=false;
     try{
       var primary=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
-      if(primary.ok)sent=true;
-      else throw new Error('primary_http_'+primary.status);
+      if(!primary.ok)throw new Error('primary_http_'+primary.status);
     }catch(primaryError){
       logFailure('lead_submission_primary',primaryError,{language:lang,preferredChannel:fc});
-      var fallback=await fetchWithRetry('/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
-      if(fallback.ok)sent=true;
-      else throw new Error('fallback_http_'+fallback.status);
+      try{
+        var fallback=await fetchWithRetry('/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+        if(!fallback.ok)throw new Error('fallback_http_'+fallback.status);
+      }catch(fallbackError){
+        logFailure('lead_submission_fallback',fallbackError,{language:lang,preferredChannel:fc});
+        throw fallbackError;
+      }
     }
-    if(!sent)throw new Error('lead_not_sent');
     st.className='ok';
     st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
     document.getElementById('bookForm').reset();
   }catch(e){
-    logFailure('lead_submission',e,{language:lang,preferredChannel:fc});
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
     st.className='er';
     st.innerHTML=(lang==='en'?'Issue sending. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">Contact via WhatsApp →</a>':lang==='fr'?'Problème. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">WhatsApp →</a>':'Problema. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">WhatsApp →</a>');
@@ -351,7 +353,7 @@ async function submitForm(){
 document.addEventListener('DOMContentLoaded',function(){
   var requestedLanguage=new URLSearchParams(window.location.search).get('lang');
   var storedLanguage=getStoredValue(LANG_STORAGE_KEY);
-  var initialLanguage=['en','es','fr'].includes(requestedLanguage)?requestedLanguage:(['en','es','fr'].includes(storedLanguage)?storedLanguage:'es');
+  var initialLanguage=SUPPORTED_LANGS.includes(requestedLanguage)?requestedLanguage:(SUPPORTED_LANGS.includes(storedLanguage)?storedLanguage:'es');
   L(initialLanguage);
   initAnalyticsConsent();
   document.querySelectorAll('[data-language]').forEach(function(button){button.addEventListener('click',function(){L(button.dataset.language)})});
