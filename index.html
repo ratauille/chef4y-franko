@@ -751,6 +751,14 @@ document.querySelectorAll('.chip').forEach(function(chip){chip.addEventListener(
   });
 })();
 
+
+
+/* FORM SUBMIT LISTENER */
+document.getElementById('bookForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  submitForm();
+});
+
 </script>
 
 <!-- Cookie Consent Banner -->
