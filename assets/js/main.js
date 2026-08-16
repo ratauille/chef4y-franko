@@ -53,11 +53,7 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
-<<<<<<< HEAD
-var lang='es';
-=======
-var lang=localStorage.getItem('c4y_lang')||'es';
->>>>>>> origin/main
+var lang=getStoredValue(LANG_STORAGE_KEY)||'es';
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -132,11 +128,7 @@ var T={
 
 function L(l){
   lang=l;
-<<<<<<< HEAD
   setStoredValue(LANG_STORAGE_KEY,l);
-=======
-  try{localStorage.setItem('c4y_lang',l)}catch(e){}
->>>>>>> origin/main
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -334,31 +326,12 @@ async function submitForm(){
   var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
   var idempotencyKey=makeIdempotencyKey();
   try{
-<<<<<<< HEAD
-    try{
-      var primary=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
-      if(!primary.ok)throw new Error('primary_http_'+primary.status);
-    }catch(primaryError){
-      logFailure('lead_submission_primary',primaryError,{language:lang,preferredChannel:fc});
-      try{
-        var fallback=await fetchWithRetry('/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
-        if(!fallback.ok)throw new Error('fallback_http_'+fallback.status);
-      }catch(fallbackError){
-        logFailure('lead_submission_fallback',fallbackError,{language:lang,preferredChannel:fc});
-        throw fallbackError;
-      }
-    }
-    st.className='ok';
-    st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
-    document.getElementById('bookForm').reset();
-=======
     var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
     if(r.ok){
       st.className='ok';
       st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
       document.getElementById('bookForm').reset();
     }else throw new Error(r.status);
->>>>>>> origin/main
   }catch(e){
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
     st.className='er';
@@ -390,10 +363,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('[data-chat-chip]').forEach(function(button){button.addEventListener('click',function(){useChip(button)})});
   document.getElementById('chSend').addEventListener('click',sendMsg);
   document.getElementById('chIn').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
-<<<<<<< HEAD
-  document.getElementById('analyticsAccept').addEventListener('click',function(){setAnalyticsConsent('granted')});
-  document.getElementById('analyticsReject').addEventListener('click',function(){setAnalyticsConsent('denied')});
-=======
 
   /* ANALYTICS CONSENT */
   var consentGiven=localStorage.getItem('c4y_consent');
@@ -420,5 +389,4 @@ document.addEventListener('DOMContentLoaded',function(){
 
   /* Aplicar idioma guardado al cargar (si no viene en URL) */
   if(!requestedLanguage){L(lang);}
->>>>>>> origin/main
 });
