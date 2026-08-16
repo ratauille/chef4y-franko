@@ -53,7 +53,11 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
+<<<<<<< HEAD
 var lang='es';
+=======
+var lang=localStorage.getItem('c4y_lang')||'es';
+>>>>>>> origin/main
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -128,7 +132,11 @@ var T={
 
 function L(l){
   lang=l;
+<<<<<<< HEAD
   setStoredValue(LANG_STORAGE_KEY,l);
+=======
+  try{localStorage.setItem('c4y_lang',l)}catch(e){}
+>>>>>>> origin/main
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -288,7 +296,7 @@ async function doSend(txt){
   addMsg('u',txt);
   var typing=addMsg('b','…');typing.classList.add('mt');
   try{
-    var r=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/chatAssistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,lang:lang,context:'private_chef_puerto_vallarta'})},{attempts:3,timeout:8000});
+    var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/chatAssistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,lang:lang,context:'private_chef_puerto_vallarta'})},{attempts:3,timeout:8000});
     var d=await r.json();
     var reply=d.reply||d.message||d.content||T[lang].chat_err||T.en.chat_err;
     typing.remove();addMsg('b',reply);hist.push({role:'assistant',content:reply});
@@ -326,6 +334,7 @@ async function submitForm(){
   var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
   var idempotencyKey=makeIdempotencyKey();
   try{
+<<<<<<< HEAD
     try{
       var primary=await fetchWithRetry('https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
       if(!primary.ok)throw new Error('primary_http_'+primary.status);
@@ -342,6 +351,14 @@ async function submitForm(){
     st.className='ok';
     st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
     document.getElementById('bookForm').reset();
+=======
+    var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+    if(r.ok){
+      st.className='ok';
+      st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
+      document.getElementById('bookForm').reset();
+    }else throw new Error(r.status);
+>>>>>>> origin/main
   }catch(e){
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
     st.className='er';
@@ -373,6 +390,35 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('[data-chat-chip]').forEach(function(button){button.addEventListener('click',function(){useChip(button)})});
   document.getElementById('chSend').addEventListener('click',sendMsg);
   document.getElementById('chIn').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
+<<<<<<< HEAD
   document.getElementById('analyticsAccept').addEventListener('click',function(){setAnalyticsConsent('granted')});
   document.getElementById('analyticsReject').addEventListener('click',function(){setAnalyticsConsent('denied')});
+=======
+
+  /* ANALYTICS CONSENT */
+  var consentGiven=localStorage.getItem('c4y_consent');
+  function grantConsent(){
+    gtag('consent','update',{'ad_storage':'granted','analytics_storage':'granted'});
+    gtag('config','G-X4T0SBCQVF',{anonymize_ip:true});
+    gtag('config','GT-P8266HD5');
+    try{localStorage.setItem('c4y_consent','yes')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  function denyConsent(){
+    try{localStorage.setItem('c4y_consent','no')}catch(e){}
+    document.getElementById('cb').style.display='none';
+  }
+  if(consentGiven==='yes'){
+    grantConsent();
+  }else if(consentGiven==='no'){
+    document.getElementById('cb').style.display='none';
+  }else{
+    document.getElementById('cb').style.display='flex';
+  }
+  document.getElementById('cb-yes').addEventListener('click',grantConsent);
+  document.getElementById('cb-no').addEventListener('click',denyConsent);
+
+  /* Aplicar idioma guardado al cargar (si no viene en URL) */
+  if(!requestedLanguage){L(lang);}
+>>>>>>> origin/main
 });
