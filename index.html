@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="robots" content="index, follow, max-image-preview:large"/>
   <meta name="author" content="Franko Salgado"/>
-  <!-- Google Analytics 4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4T0SBCQVF"></script>
+  <!-- Google Analytics 4 — Consent Mode v2 -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4T0SBCQVF"></script>
+  <script>
     gtag('js', new Date());
     gtag('config', 'G-X4T0SBCQVF');
     gtag('config', 'GT-P8266HD5');
@@ -571,7 +574,7 @@ document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
 
 
 /* i18n */
-var lang='en';
+var lang=localStorage.getItem('lang')||'es';
 var T={
   en:{ns:'Services',na:'The Chef',nb:'Book',nc:'Book Now',
     he:'Award-Winning Private Chef · Puerto Vallarta · Punta Mita · Riviera Nayarit',
@@ -645,7 +648,7 @@ var T={
 };
 
 function L(l){
-  lang=l;
+  lang=l;localStorage.setItem('lang',lang);
   document.documentElement.lang=l;
   document.querySelectorAll('[data-k]').forEach(el=>{
     var k=el.getAttribute('data-k');
@@ -726,6 +729,27 @@ document.getElementById('chX').addEventListener('click',closeChat);
 document.getElementById('chSend').addEventListener('click',sendMsg);
 document.getElementById('chIn').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();sendMsg()}});
 document.querySelectorAll('.chip').forEach(function(chip){chip.addEventListener('click',function(){useChip(chip)})});
+
+
+
+/* COOKIE CONSENT */
+(function(){
+  var cb=document.getElementById('cb');
+  var consent=localStorage.getItem('cookieConsent');
+  if(!consent){
+    setTimeout(function(){cb.style.display='flex'},800);
+  }
+  document.getElementById('cb-yes').addEventListener('click',function(){
+    localStorage.setItem('cookieConsent','accepted');
+    gtag('consent','update',{ad_storage:'granted',analytics_storage:'granted',ad_user_data:'granted',ad_personalization:'granted'});
+    cb.style.display='none';
+  });
+  document.getElementById('cb-no').addEventListener('click',function(){
+    localStorage.setItem('cookieConsent','rejected');
+    gtag('consent','update',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    cb.style.display='none';
+  });
+})();
 
 </script>
 
