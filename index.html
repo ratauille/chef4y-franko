@@ -542,7 +542,7 @@
       <div class="ch-av">🍽</div>
       <div><div class="ch-nm">Chef 4 You Assistant</div><div class="ch-st">Online now</div></div>
     </div>
-    <button class="ch-x" data-close-chat aria-label="Close chat">✕</button>
+    <button class="ch-x" id="chX" data-close-chat aria-label="Close chat">✕</button>
   </div>
   <div class="ch-msgs" id="chMsgs"></div>
   <div class="chips" id="chips">
@@ -718,6 +718,15 @@ async function submitForm(){
   }
   btn.disabled=false;btn.textContent=T[lang].fbt||T.en.fbt;
 }
+
+
+/* CHAT EVENT LISTENERS */
+document.getElementById('fab').addEventListener('click',openChat);
+document.getElementById('chX').addEventListener('click',closeChat);
+document.getElementById('chSend').addEventListener('click',sendMsg);
+document.getElementById('chIn').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();sendMsg()}});
+document.querySelectorAll('.chip').forEach(function(chip){chip.addEventListener('click',function(){useChip(chip)})});
+
 </script>
 
 <!-- Cookie Consent Banner -->
