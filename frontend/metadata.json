@@ -1,0 +1,4 @@
+{
+  "name": "ChefOS Control Panel",
+  "description": "A management dashboard for the ChefOS infrastructure, integrating Firestore, Cloud Workflows, and Secret Manager."
+}
