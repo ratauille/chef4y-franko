@@ -1,5 +1,11 @@
 export type ViewState = 'dashboard' | 'firestore' | 'workflows' | 'secrets';
 
+export type DataCollection = 'leads' | 'quotes' | 'reservations';
+export interface Lead { id: string; fullName: string; email?: string; phone?: string; preferredChannel: string; experienceType: string; serviceArea: string; serviceDate?: string; guestCount?: number; message?: string; status?: string; createdAt?: string; [key: string]: unknown; }
+export interface Quote { id: string; leadId?: string; customerName?: string; total?: number; status?: string; createdAt?: string; [key: string]: unknown; }
+export interface Reservation { id: string; leadId?: string; customerName?: string; reservationDate?: string; status?: string; createdAt?: string; [key: string]: unknown; }
+export interface DashboardMetrics { leads: number; quotes: number; reservations: number; pendingLeads: number; recentActivity: Array<{ time: string; leads: number; quotes: number; reservations: number }>; }
+
 export interface SystemMetrics {
     cpu: number;
     memory: number;

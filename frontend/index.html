@@ -6,6 +6,7 @@
     <title>ChefOS Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        window.CHEFOS_API_URL = window.CHEFOS_API_URL || "https://chefos-backend-74980816903.us-central1.run.app";
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -29,9 +30,9 @@
             }
         }
     </script>
-    </head>
+</head>
 <body class="bg-dark-bg text-slate-200 antialiased h-screen overflow-hidden">
     <div id="root" class="h-full"></div>
     <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.js"></script></body>
+</body>
 </html>

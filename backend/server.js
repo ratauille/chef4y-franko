@@ -10,6 +10,7 @@ import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 import rateLimit from 'express-rate-limit';
 import { WebSocketServer, WebSocket } from 'ws';
+import { Firestore, Timestamp } from '@google-cloud/firestore';
 
 const app = express();
 app.use(express.json({limit: process?.env?.API_PAYLOAD_MAX_SIZE || "7mb"}));
@@ -28,6 +29,18 @@ if (!PROXY_HEADER) {
   console.error("Error: Environment variables PROXY_HEADER must be set.");
   process.exit(1);
 }
+
+const firestore = new Firestore({ projectId: GOOGLE_CLOUD_PROJECT });
+const DATA_COLLECTIONS = new Set(['leads', 'quotes', 'reservations']);
+function serializeDocument(snapshot) { const data = snapshot.data() || {}; return { id: snapshot.id, ...data, createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null, updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAt || null }; }
+async function listCollection(collectionName, limit = 100) { const safeLimit = Math.min(Math.max(Number(limit) || 100, 1), 500); const snapshot = await firestore.collection(collectionName).orderBy('createdAt', 'desc').limit(safeLimit).get(); return snapshot.docs.map(serializeDocument); }
+function parseLead(body) { const allowed = ['fullName', 'email', 'phone', 'preferredChannel', 'experienceType', 'serviceArea', 'serviceDate', 'guestCount', 'message', 'emailMarketing', 'lang', 'privacyConsent', 'contactConsent', 'source']; const result = Object.fromEntries(Object.entries(body || {}).filter(([key]) => allowed.includes(key))); if (typeof result.fullName !== 'string' || result.fullName.trim().length < 2) throw new Error('fullName is required'); if (!result.email && !result.phone) throw new Error('email or phone is required'); if (result.privacyConsent !== true || result.contactConsent !== true) throw new Error('consent is required'); return result; }
+app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'chefos-api' }));
+for (const collectionName of DATA_COLLECTIONS) app.get(`/api/${collectionName}`, async (req, res) => { try { res.json({ data: await listCollection(collectionName, req.query.limit) }); } catch (error) { console.error(`[API] Failed to list ${collectionName}:`, error.message); res.status(503).json({ error: 'firestore_unavailable' }); } });
+app.post('/api/leads', async (req, res) => { try { const lead = parseLead(req.body); const idempotencyKey = req.get('Idempotency-Key'); const doc = idempotencyKey ? firestore.collection('leads').doc(idempotencyKey) : firestore.collection('leads').doc(); const existing = await doc.get(); if (existing.exists) return res.status(200).json({ id: doc.id, status: 'received' }); await doc.create({ ...lead, status: 'received', createdAt: Timestamp.now(), updatedAt: Timestamp.now() }); res.status(201).json({ id: doc.id, status: 'received' }); } catch (error) { const validation = ['fullName is required', 'email or phone is required', 'consent is required'].includes(error.message); res.status(validation ? 400 : 503).json({ error: validation ? 'validation_error' : 'firestore_unavailable', message: error.message }); } });
+app.get('/api/dashboard/metrics', async (_req, res) => { try { const [leads, quotes, reservations] = await Promise.all([listCollection('leads', 500), listCollection('quotes', 500), listCollection('reservations', 500)]); res.json({ leads: leads.length, quotes: quotes.length, reservations: reservations.length, pendingLeads: leads.filter((lead) => ['received', 'pending'].includes(lead.status)).length, recentActivity: [] }); } catch (error) { console.error('[API] Failed to load dashboard metrics:', error.message); res.status(503).json({ error: 'firestore_unavailable' }); } });
+app.get('/api/workflows/executions', (_req, res) => res.json({ data: [] }));
+app.post('/api/workflows/:workflowName/executions', (_req, res) => res.status(501).json({ error: 'workflow_not_configured', message: 'Configure Workflows before triggering executions.' }));
 
 app.set('trust proxy', 1 /* number of proxies between user and server */);
 

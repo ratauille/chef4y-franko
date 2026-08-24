@@ -1,4 +1,4 @@
-﻿var LANG_STORAGE_KEY='chef4you_lang';
+var LANG_STORAGE_KEY='chef4you_lang';
 var ANALYTICS_CONSENT_KEY='chef4you_analytics_consent';
 var SUPPORTED_LANGS=['en','es','fr'];
 var analyticsEnabled=false;
@@ -323,21 +323,24 @@ async function submitForm(){
   btn.disabled=true;btn.textContent=lang==='en'?'Sending…':lang==='fr'?'Envoi…':'Enviando…';
   st.className='';st.textContent='';
   var guestCountValue=document.getElementById('fg2').value;
-  var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'chef4you_v4_final'};
+  var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'landing_page'};
   var idempotencyKey=makeIdempotencyKey();
+  var apiUrl=(typeof window !== 'undefined' && window.CHEFOS_API_URL ? window.CHEFOS_API_URL : 'https://chefos-backend-74980816903.us-central1.run.app').replace(/\/$/, '');
   try{
-    var r=await fetchWithRetry('https://base44.app/api/apps/6a717d7af1768f8448815281/functions/captureLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+    var r=await fetchWithRetry(apiUrl+'/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
     if(r.ok){
       st.className='ok';
       st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
       document.getElementById('bookForm').reset();
-    }else throw new Error(r.status);
+    }else throw new Error('HTTP '+r.status);
   }catch(e){
+    logFailure('lead_capture',e,{email:fe,phone:fp});
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
     st.className='er';
     st.innerHTML=(lang==='en'?'Issue sending. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">Contact via WhatsApp →</a>':lang==='fr'?'Problème. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">WhatsApp →</a>':'Problema. <a class="status-link" rel="noopener" target="_blank" href="'+wa+'">WhatsApp →</a>');
+  }finally{
+    btn.disabled=false;btn.textContent=T[lang].fbt||T.en.fbt;
   }
-  btn.disabled=false;btn.textContent=T[lang].fbt||T.en.fbt;
 }
 
 document.addEventListener('DOMContentLoaded',function(){
