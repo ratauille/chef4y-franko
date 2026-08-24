@@ -413,6 +413,13 @@ async function submitForm(){
   }
 }
 
+window.submitForm = submitForm;
+
+function addEv(target, evt, fn) {
+  var el = typeof target === 'string' ? document.getElementById(target) : target;
+  if (el) el.addEventListener(evt, fn);
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   var requestedLanguage=new URLSearchParams(window.location.search).get('lang');
   var storedLanguage=getStoredValue(LANG_STORAGE_KEY);
@@ -421,21 +428,25 @@ document.addEventListener('DOMContentLoaded',function(){
   initAnalyticsConsent();
   document.querySelectorAll('[data-language]').forEach(function(button){button.addEventListener('click',function(){L(button.dataset.language)})});
   document.querySelectorAll('[data-scroll-booking]').forEach(function(item){
-    item.addEventListener('click',function(){document.getElementById('booking').scrollIntoView({behavior:'smooth'})});
+    item.addEventListener('click',function(){
+      var b=document.getElementById('booking');
+      if(b)b.scrollIntoView({behavior:'smooth'});
+    });
     item.addEventListener('keydown',function(event){
       if(event.key==='Enter'||event.key===' '){
         event.preventDefault();
-        document.getElementById('booking').scrollIntoView({behavior:'smooth'});
+        var b=document.getElementById('booking');
+        if(b)b.scrollIntoView({behavior:'smooth'});
       }
     });
   });
-  document.getElementById('q_calc').addEventListener('click',calcQuote);
-  document.getElementById('bookForm').addEventListener('submit',function(event){event.preventDefault();submitForm()});
-  document.getElementById('fab').addEventListener('click',openChat);
-  document.querySelector('[data-close-chat]').addEventListener('click',closeChat);
+  addEv('q_calc','click',calcQuote);
+  addEv('bookForm','submit',function(event){if(event&&event.preventDefault)event.preventDefault();submitForm(event)});
+  addEv('fab','click',openChat);
+  addEv(document.querySelector('[data-close-chat]'),'click',closeChat);
   document.querySelectorAll('[data-chat-chip]').forEach(function(button){button.addEventListener('click',function(){useChip(button)})});
-  document.getElementById('chSend').addEventListener('click',sendMsg);
-  document.getElementById('chIn').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
+  addEv('chSend','click',sendMsg);
+  addEv('chIn','keydown',function(event){if(event.key==='Enter'){event.preventDefault();sendMsg()}});
 
   /* ANALYTICS CONSENT */
   var consentGiven=localStorage.getItem('c4y_consent');
@@ -444,21 +455,26 @@ document.addEventListener('DOMContentLoaded',function(){
     gtag('config','G-X4T0SBCQVF',{anonymize_ip:true});
     gtag('config','GT-P8266HD5');
     try{localStorage.setItem('c4y_consent','yes')}catch(e){}
-    document.getElementById('cb').style.display='none';
+    var cb=document.getElementById('cb');
+    if(cb)cb.style.display='none';
   }
   function denyConsent(){
     try{localStorage.setItem('c4y_consent','no')}catch(e){}
-    document.getElementById('cb').style.display='none';
+    var cb=document.getElementById('cb');
+    if(cb)cb.style.display='none';
   }
-  if(consentGiven==='yes'){
-    grantConsent();
-  }else if(consentGiven==='no'){
-    document.getElementById('cb').style.display='none';
-  }else{
-    document.getElementById('cb').style.display='flex';
+  var cb=document.getElementById('cb');
+  if(cb){
+    if(consentGiven==='yes'){
+      grantConsent();
+    }else if(consentGiven==='no'){
+      cb.style.display='none';
+    }else{
+      cb.style.display='flex';
+    }
   }
-  document.getElementById('cb-yes').addEventListener('click',grantConsent);
-  document.getElementById('cb-no').addEventListener('click',denyConsent);
+  addEv('cb-yes','click',grantConsent);
+  addEv('cb-no','click',denyConsent);
 
   /* Aplicar idioma guardado al cargar (si no viene en URL) */
   if(!requestedLanguage){L(lang);}
