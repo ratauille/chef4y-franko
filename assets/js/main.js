@@ -384,20 +384,25 @@ async function submitForm(){
   try{
     var r=await fetchWithRetry(apiUrl+'/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
     var resData=await r.json();
-    if(r.ok){
-      st.className='ok';
-      st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
-      document.getElementById('bookForm').reset();
+    if(r.ok && resData && resData.success === true){
+      if(resData.duplicate === true){
+        st.className='ok';
+        st.textContent=lang==='en'?'✓ Request already received! (ID: '+resData.id+')':lang==='fr'?'✓ Demande déjà reçue ! (ID: '+resData.id+')':'✓ ¡Solicitud ya registrada previa! (ID: '+resData.id+')';
+      }else{
+        st.className='ok';
+        st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
+        document.getElementById('bookForm').reset();
 
-      // ENTREGABLE 5: Disparar evento de conversión sólo cuando el backend confirme éxito
-      window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({
-        event:'generate_lead',
-        lead_id:resData.id,
-        service:fx,
-        currency:'USD'
-      });
-    }else throw new Error('HTTP '+r.status);
+        // ENTREGABLE 5: Disparar evento de conversión sólo cuando el backend confirme éxito
+        window.dataLayer=window.dataLayer||[];
+        window.dataLayer.push({
+          event:'generate_lead',
+          lead_id:resData.id,
+          service:fx,
+          currency:'USD'
+        });
+      }
+    }else throw new Error((resData && resData.message) || ('HTTP '+r.status));
   }catch(e){
     logFailure('lead_capture',e,{email:fe,phone:fp});
     var wa='https://wa.me/523221606843?text='+encodeURIComponent((lang==='en'?'Hi Chef Franko, I\'m interested in booking an experience. Name: ':lang==='fr'?'Bonjour Chef Franko, je voudrais réserver. Nom: ':'Hola Chef Franko, me interesa reservar. Nombre: ')+fn);
