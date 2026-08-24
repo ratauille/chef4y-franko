@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Database, GitMerge, KeyRound, Settings, ChefHat } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Database, GitMerge, KeyRound, Settings, ChefHat } from 'lucide-react';
 import { ViewState } from '../types.ts';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
     const navItems = [
         { id: 'dashboard' as ViewState, label: 'Overview', icon: LayoutDashboard },
+        { id: 'leads' as ViewState, label: 'Bandeja de Leads', icon: MessageSquare },
         { id: 'firestore' as ViewState, label: 'Firestore DB', icon: Database },
         { id: 'workflows' as ViewState, label: 'Workflows', icon: GitMerge },
         { id: 'secrets' as ViewState, label: 'Secret Manager', icon: KeyRound },

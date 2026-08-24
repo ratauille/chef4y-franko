@@ -300,6 +300,41 @@ async function doSend(txt){
   }
 }
 
+function getAttributionParams(){
+  var params=new URLSearchParams(window.location.search);
+  var utmSource=params.get('utm_source');
+  var utmMedium=params.get('utm_medium');
+  var utmCampaign=params.get('utm_campaign');
+  var ref=document.referrer||'';
+  var source=utmSource;
+  var medium=utmMedium||'cpc';
+  var campaign=utmCampaign||undefined;
+
+  if(!source){
+    medium='organic';
+    if(!ref){
+      source='direct';
+      medium='none';
+    }else if(ref.indexOf('google.')!==-1){
+      source='google_organic';
+    }else if(ref.indexOf('instagram.')!==-1){
+      source='instagram';
+    }else if(ref.indexOf('facebook.')!==-1){
+      source='facebook';
+    }else{
+      source='referral';
+    }
+  }
+
+  return {
+    source:source,
+    medium:medium,
+    campaign:campaign,
+    referrer:ref,
+    landingPage:window.location.pathname
+  };
+}
+
 /* FORM */
 async function submitForm(){
   var btn=document.getElementById('fsub');
@@ -323,15 +358,45 @@ async function submitForm(){
   btn.disabled=true;btn.textContent=lang==='en'?'Sending…':lang==='fr'?'Envoi…':'Enviando…';
   st.className='';st.textContent='';
   var guestCountValue=document.getElementById('fg2').value;
-  var payload={fullName:fn,email:fe,phone:fp,preferredChannel:fc,experienceType:fx,serviceArea:fz,serviceDate:document.getElementById('fd').value,guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,message:document.getElementById('fm').value.trim(),privacyConsent:cp,contactConsent:cs,emailMarketing:document.getElementById('cm').checked,lang:lang,source:'landing_page'};
+  var attr=getAttributionParams();
+  var payload={
+    fullName:fn,
+    email:fe,
+    phone:fp,
+    preferredChannel:fc,
+    experienceType:fx,
+    serviceArea:fz,
+    serviceDate:document.getElementById('fd').value,
+    guestCount:guestCountValue?parseInt(guestCountValue,10):undefined,
+    message:document.getElementById('fm').value.trim(),
+    privacyConsent:cp,
+    contactConsent:cs,
+    emailMarketing:document.getElementById('cm').checked,
+    lang:lang,
+    source:attr.source,
+    medium:attr.medium,
+    campaign:attr.campaign,
+    referrer:attr.referrer,
+    landingPage:attr.landingPage
+  };
   var idempotencyKey=makeIdempotencyKey();
   var apiUrl=(typeof window !== 'undefined' && window.CHEFOS_API_URL ? window.CHEFOS_API_URL : 'https://chefos-backend-74980816903.us-central1.run.app').replace(/\/$/, '');
   try{
     var r=await fetchWithRetry(apiUrl+'/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload)},{attempts:2,timeout:7000});
+    var resData=await r.json();
     if(r.ok){
       st.className='ok';
       st.textContent=lang==='en'?'✓ Request sent! We\'ll contact you within 2 hours.':lang==='fr'?'✓ Envoyé ! Nous vous contacterons dans 2 heures.':'✓ ¡Solicitud enviada! Te contactamos en menos de 2 horas.';
       document.getElementById('bookForm').reset();
+
+      // ENTREGABLE 5: Disparar evento de conversión sólo cuando el backend confirme éxito
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({
+        event:'generate_lead',
+        lead_id:resData.id,
+        service:fx,
+        currency:'USD'
+      });
     }else throw new Error('HTTP '+r.status);
   }catch(e){
     logFailure('lead_capture',e,{email:fe,phone:fp});
