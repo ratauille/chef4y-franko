@@ -13,15 +13,15 @@ const getApiUrl = (): string => {
   return (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 };
 
-const INTERNAL_API_KEY = 'chefos-internal-key-2026';
-
 const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
   const baseUrl = getApiUrl();
+  const adminKey = typeof window !== 'undefined' ? sessionStorage.getItem('chefos_admin_key') || '' : '';
+
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': INTERNAL_API_KEY,
+      'x-api-key': adminKey,
       ...options?.headers,
     },
   });
@@ -39,6 +39,20 @@ const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
 export const getLeads = async (): Promise<Lead[]> => {
   const res = await request<{ success?: boolean; data: Lead[] }>('/api/leads');
   return Array.isArray(res) ? res : res.data || [];
+};
+
+export const updateLeadStatus = async (id: string, estado: string) => {
+  return request<{ success: boolean }>(`/api/leads/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estado }),
+  });
+};
+
+export const addLeadNote = async (id: string, note: string) => {
+  return request<{ success: boolean }>(`/api/leads/${id}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ note }),
+  });
 };
 
 export const createLead = async (leadData: Record<string, unknown>): Promise<{ success: boolean; id: string }> => {

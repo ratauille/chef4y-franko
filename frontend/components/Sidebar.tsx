@@ -1,13 +1,14 @@
 import React from 'react';
-import { LayoutDashboard, MessageSquare, Database, GitMerge, KeyRound, Settings, ChefHat } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Database, GitMerge, KeyRound, Settings, ChefHat, LogOut } from 'lucide-react';
 import { ViewState } from '../types.ts';
 
 interface SidebarProps {
     currentView: ViewState;
     onViewChange: (view: ViewState) => void;
+    onLogout?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }) => {
     const navItems = [
         { id: 'dashboard' as ViewState, label: 'Overview', icon: LayoutDashboard },
         { id: 'leads' as ViewState, label: 'Bandeja de Leads', icon: MessageSquare },
@@ -49,11 +50,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
                 })}
             </nav>
 
-            <div className="p-4 border-t border-dark-border">
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-dark-border/50 hover:text-slate-200 transition-colors">
-                    <Settings size={20} />
-                    <span className="font-medium">Project Settings</span>
+            <div className="p-4 border-t border-dark-border space-y-2">
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:bg-dark-border/50 hover:text-slate-200 transition-colors text-sm">
+                    <Settings size={18} />
+                    <span className="font-medium">Configuración</span>
                 </button>
+                {onLogout && (
+                    <button
+                        onClick={onLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors text-sm font-medium"
+                    >
+                        <LogOut size={18} />
+                        <span>Cerrar Sesión</span>
+                    </button>
+                )}
             </div>
         </div>
     );

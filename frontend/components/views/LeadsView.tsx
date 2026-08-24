@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Lead } from '../../types.ts';
-import { getLeads } from '../../services/api.ts';
-import { MessageSquare, Mail, RefreshCw, UserCheck, Clock, CheckCircle2, XCircle, FileText } from 'lucide-react';
+import { getLeads, updateLeadStatus, addLeadNote } from '../../services/api.ts';
+import { MessageSquare, Mail, RefreshCw, UserCheck, Clock, CheckCircle2, XCircle, FileText, Plus } from 'lucide-react';
 
 export const LeadsView: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [newNote, setNewNote] = useState('');
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
 
   const fetchLeadsData = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getLeads();
-      // Sort new / pending leads first
       const sorted = [...data].sort((a, b) => {
         const isNewA = ['nuevo', 'pendiente', 'received', 'pending'].includes((a.estado || a.status || '').toLowerCase());
         const isNewB = ['nuevo', 'pendiente', 'received', 'pending'].includes((b.estado || b.status || '').toLowerCase());
@@ -27,7 +26,7 @@ export const LeadsView: React.FC = () => {
       });
       setLeads(sorted);
     } catch (err: any) {
-      setError(err.message || 'Error cargando leads');
+      setError(err.message || 'Error cargando leads. Verifica la clave administrativa.');
     } finally {
       setLoading(false);
     }
@@ -74,24 +73,35 @@ export const LeadsView: React.FC = () => {
     );
   };
 
-  const handleStatusChange = (leadId: string, newStatus: string) => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, estado: newStatus, status: newStatus } : l))
-    );
+  const handleStatusChange = async (leadId: string, newStatus: string) => {
+    try {
+      await updateLeadStatus(leadId, newStatus);
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadId ? { ...l, estado: newStatus, status: newStatus } : l))
+      );
+    } catch (err: any) {
+      alert('Error actualizando estado: ' + err.message);
+    }
   };
 
-  const handleAddNote = (leadId: string) => {
-    if (!newNote.trim()) return;
-    setLeads((prev) =>
-      prev.map((l) => {
-        if (l.id === leadId) {
-          const notes = l.notes || [];
-          return { ...l, notes: [...notes, newNote.trim()], lastNote: newNote.trim() };
-        }
-        return l;
-      })
-    );
-    setNewNote('');
+  const handleAddNote = async (leadId: string) => {
+    if (!noteText.trim()) return;
+    try {
+      await addLeadNote(leadId, noteText.trim());
+      setLeads((prev) =>
+        prev.map((l) => {
+          if (l.id === leadId) {
+            const notes = l.notes || [];
+            return { ...l, notes: [...notes, noteText.trim()], lastNote: noteText.trim() };
+          }
+          return l;
+        })
+      );
+      setNoteText('');
+      setSelectedLeadId(null);
+    } catch (err: any) {
+      alert('Error agregando nota: ' + err.message);
+    }
   };
 
   return (
@@ -125,11 +135,11 @@ export const LeadsView: React.FC = () => {
             <thead className="bg-dark-bg/50 text-slate-400 border-b border-dark-border">
               <tr>
                 <th className="px-6 py-4 font-medium">Cliente</th>
-                <th className="px-6 py-4 font-medium">Solicitud / Contacto</th>
+                <th className="px-6 py-4 font-medium">Contacto</th>
                 <th className="px-6 py-4 font-medium">Servicio & Detalles</th>
                 <th className="px-6 py-4 font-medium">Origen / Atribución</th>
                 <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium text-right">Acciones Rápidas</th>
+                <th className="px-6 py-4 font-medium text-right">Acciones & Notas</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-border">
@@ -199,28 +209,60 @@ export const LeadsView: React.FC = () => {
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {cleanPhone && (
-                          <a
-                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                              `Hola ${name}, me contacto de Chef 4 You respecto a tu solicitud.`
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-medium transition-colors flex items-center gap-1"
-                            title="Contactar vía WhatsApp"
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-2">
+                          {cleanPhone && (
+                            <a
+                              href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                                `Hola ${name}, me contacto de Chef 4 You respecto a tu solicitud.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                              title="Contactar vía WhatsApp"
+                            >
+                              <MessageSquare size={13} /> WhatsApp
+                            </a>
+                          )}
+                          {email && (
+                            <a
+                              href={`mailto:${email}?subject=Cotización%20Chef%20Privado%20Chef%204%20You`}
+                              className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                              title="Enviar Correo"
+                            >
+                              <Mail size={13} /> Correo
+                            </a>
+                          )}
+                        </div>
+
+                        {selectedLeadId === lead.id ? (
+                          <div className="mt-2 flex items-center gap-1">
+                            <input
+                              type="text"
+                              placeholder="Escribir nota..."
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              className="bg-dark-bg border border-dark-border rounded px-2 py-1 text-xs text-white"
+                            />
+                            <button
+                              onClick={() => handleAddNote(lead.id)}
+                              className="px-2 py-1 bg-chef-600 text-white rounded text-xs"
+                            >
+                              Guardar
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedLeadId(lead.id)}
+                            className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
                           >
-                            <MessageSquare size={14} /> WhatsApp
-                          </a>
+                            <Plus size={12} /> Nota
+                          </button>
                         )}
-                        {email && (
-                          <a
-                            href={`mailto:${email}?subject=Cotización%20Chef%20Privado%20Chef%204%20You`}
-                            className="px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded text-xs font-medium transition-colors flex items-center gap-1"
-                            title="Enviar Correo"
-                          >
-                            <Mail size={14} /> Correo
-                          </a>
+                        {lead.lastNote && (
+                          <div className="text-xs text-slate-400 italic max-w-xs truncate">
+                            Nota: {lead.lastNote}
+                          </div>
                         )}
                       </div>
                     </td>

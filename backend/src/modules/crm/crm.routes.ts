@@ -20,6 +20,10 @@ interface LeadInput {
   emailMarketing?: boolean | string;
   lang?: string;
   source?: string;
+  medium?: string;
+  campaign?: string;
+  referrer?: string;
+  landingPage?: string;
   estado?: string;
   status?: string;
   [key: string]: unknown;
@@ -64,15 +68,16 @@ function serializeDoc(snapshot: DocumentSnapshot) {
   };
 }
 
-// Protección de seguridad para endpoints de lectura de clientes
+// Protección de seguridad con CHEFOS_ADMIN_API_KEY
 function verifyAuth(request: FastifyRequest, reply: FastifyReply): boolean {
-  const apiKey = process.env.INTERNAL_API_KEY || 'chefos-internal-key-2026';
-  const requestKey = request.headers['x-api-key'] || request.headers['authorization']?.toString().replace(/^Bearer\s+/i, '');
-  if (!requestKey || requestKey !== apiKey) {
+  const adminKey = process.env.CHEFOS_ADMIN_API_KEY || process.env.INTERNAL_API_KEY || 'chefos-internal-key-2026';
+  const requestKey = (request.headers['x-api-key'] || request.headers['authorization']?.toString().replace(/^Bearer\s+/i, '') || '').toString().trim();
+
+  if (!requestKey || requestKey !== adminKey.trim()) {
     reply.code(401).send({
       success: false,
       error: 'unauthorized',
-      message: 'Acceso privado. Requiere clave de autorización x-api-key.',
+      message: 'Acceso privado no autorizado. Requiere clave administrativa válida.',
     });
     return false;
   }
@@ -80,7 +85,7 @@ function verifyAuth(request: FastifyRequest, reply: FastifyReply): boolean {
 }
 
 export async function crmRoutes(app: FastifyInstance) {
-  // GET /api/leads (Protegido por Clave)
+  // GET /api/leads (Protegido)
   app.get('/leads', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
     try {
@@ -102,7 +107,7 @@ export async function crmRoutes(app: FastifyInstance) {
     }
   });
 
-  // GET /api/leads/recent?limit=10 (Protegido por Clave)
+  // GET /api/leads/recent?limit=10 (Protegido)
   app.get<{ Querystring: { limit?: string } }>('/leads/recent', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
     try {
@@ -118,7 +123,7 @@ export async function crmRoutes(app: FastifyInstance) {
           email: data.email || null,
           telefono: data.telefono || data.phone || null,
           servicio: data.servicio || data.experienceType || null,
-          estado: data.estado || data.status || 'pendiente',
+          estado: data.estado || data.status || 'nuevo',
           createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null,
         };
       });
@@ -141,6 +146,64 @@ export async function crmRoutes(app: FastifyInstance) {
         error: 'firestore_unavailable',
         message: error.message || 'Error al obtener leads recientes.',
       });
+    }
+  });
+
+  // PATCH /api/leads/:id/status (Protegido - Actualizar estado de lead)
+  app.patch<{ Params: { id: string }; Body: { estado?: string; status?: string } }>('/leads/:id/status', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      const estado = (request.body?.estado || request.body?.status || '').toString().trim();
+      if (!estado) {
+        return reply.code(400).send({ success: false, error: 'validation_error', message: 'Se requiere el nuevo estado.' });
+      }
+
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado.' });
+      }
+
+      await docRef.update({
+        estado,
+        status: estado,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      return reply.send({ success: true, id, estado });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
+    }
+  });
+
+  // POST /api/leads/:id/notes (Protegido - Agregar nota a lead)
+  app.post<{ Params: { id: string }; Body: { note?: string } }>('/leads/:id/notes', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      const note = (request.body?.note || '').toString().trim();
+      if (!note) {
+        return reply.code(400).send({ success: false, error: 'validation_error', message: 'La nota no puede estar vacía.' });
+      }
+
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado.' });
+      }
+
+      await docRef.update({
+        notes: FieldValue.arrayUnion(note),
+        lastNote: note,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      return reply.send({ success: true, id, note });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
     }
   });
 
@@ -168,8 +231,15 @@ export async function crmRoutes(app: FastifyInstance) {
       const contactConsent: boolean = body.contactConsent === true || String(body.contactConsent) === 'true';
       const emailMarketing: boolean = body.emailMarketing === true || String(body.emailMarketing) === 'true';
       const lang = (body.lang || 'es').toString().trim();
-      const source = (body.source || 'landing_page').toString().trim();
-      const estado = (body.estado || body.status || 'pendiente').toString().trim();
+
+      // Atribución
+      const source = (body.source || 'direct').toString().trim();
+      const medium = (body.medium || 'organic').toString().trim();
+      const campaign = body.campaign ? String(body.campaign).trim() : undefined;
+      const referrer = body.referrer ? String(body.referrer).trim() : undefined;
+      const landingPage = body.landingPage ? String(body.landingPage).trim() : undefined;
+
+      const estado = (body.estado || body.status || 'nuevo').toString().trim();
 
       // 1. Validaciones obligatorias
       if (!nombre || nombre.length < 2) {
@@ -274,6 +344,10 @@ export async function crmRoutes(app: FastifyInstance) {
         emailMarketing,
         lang,
         source,
+        medium,
+        campaign: campaign || undefined,
+        referrer: referrer || undefined,
+        landingPage: landingPage || undefined,
         estado,
         status: estado,
         idempotencyKey: idempotencyKey || undefined,
@@ -298,47 +372,29 @@ export async function crmRoutes(app: FastifyInstance) {
     }
   });
 
-  // GET /api/quotes (Protegido por Clave)
+  // GET /api/quotes (Protegido)
   app.get('/quotes', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
     try {
       const snapshot = await firestore.collection('quotes').get();
       const docs = snapshot.docs.map(serializeDoc);
-      docs.sort((a: any, b: any) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeB - timeA;
-      });
       return reply.send({ success: true, data: docs });
     } catch (error: any) {
       app.log.error(error);
-      return reply.code(503).send({
-        success: false,
-        error: 'firestore_unavailable',
-        message: error.message || 'Error al obtener cotizaciones desde Firestore.',
-      });
+      return reply.code(503).send({ success: false, error: 'firestore_unavailable', message: error.message });
     }
   });
 
-  // GET /api/reservations (Protegido por Clave)
+  // GET /api/reservations (Protegido)
   app.get('/reservations', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
     try {
       const snapshot = await firestore.collection('reservations').get();
       const docs = snapshot.docs.map(serializeDoc);
-      docs.sort((a: any, b: any) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeB - timeA;
-      });
       return reply.send({ success: true, data: docs });
     } catch (error: any) {
       app.log.error(error);
-      return reply.code(503).send({
-        success: false,
-        error: 'firestore_unavailable',
-        message: error.message || 'Error al obtener reservaciones desde Firestore.',
-      });
+      return reply.code(503).send({ success: false, error: 'firestore_unavailable', message: error.message });
     }
   });
 }

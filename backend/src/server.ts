@@ -6,8 +6,10 @@ import { crmRoutes } from './modules/crm/crm.routes.js';
 const app = Fastify({ logger: true });
 
 const ALLOWED_ORIGINS = [
+  'https://chef4youbyfranko.com',
   'https://franko.chefos.com',
   'https://chef4y.com',
+  'https://ratauille.github.io',
   'https://chefos-backend-74980816903.us-central1.run.app',
 ];
 
@@ -19,6 +21,8 @@ await app.register(cors, {
     }
     cb(null, false);
   },
+  allowedHeaders: ['Content-Type', 'x-api-key', 'Idempotency-Key', 'x-idempotency-key', 'Authorization'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 });
 

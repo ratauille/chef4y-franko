@@ -3,13 +3,14 @@ import { firestore } from '../../shared/firestore.js';
 
 export async function dashboardRoutes(app: FastifyInstance) {
   app.get('/metrics', async (request, reply) => {
-    const apiKey = process.env.INTERNAL_API_KEY || 'chefos-internal-key-2026';
-    const requestKey = request.headers['x-api-key'] || request.headers['authorization']?.toString().replace(/^Bearer\s+/i, '');
-    if (!requestKey || requestKey !== apiKey) {
+    const adminKey = process.env.CHEFOS_ADMIN_API_KEY || process.env.INTERNAL_API_KEY || 'chefos-internal-key-2026';
+    const requestKey = (request.headers['x-api-key'] || request.headers['authorization']?.toString().replace(/^Bearer\s+/i, '') || '').toString().trim();
+
+    if (!requestKey || requestKey !== adminKey.trim()) {
       return reply.code(401).send({
         success: false,
         error: 'unauthorized',
-        message: 'Acceso privado. Requiere clave de autorización x-api-key.',
+        message: 'Acceso privado no autorizado. Requiere clave administrativa válida.',
       });
     }
 
@@ -22,7 +23,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
 
       const leadsDocs = leadsSnap.docs.map((doc) => doc.data());
       const pendingLeads = leadsDocs.filter((lead) =>
-        ['pendiente', 'pending', 'received'].includes(lead.estado || lead.status),
+        ['nuevo', 'pendiente', 'pending', 'received'].includes((lead.estado || lead.status || '').toLowerCase()),
       ).length;
 
       return reply.send({
