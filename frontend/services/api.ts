@@ -41,6 +41,43 @@ export const getLeads = async (): Promise<Lead[]> => {
   return Array.isArray(res) ? res : res.data || [];
 };
 
+export const getTrashLeads = async (): Promise<Lead[]> => {
+  const res = await request<{ success?: boolean; data: Lead[] }>('/api/leads/trash');
+  return Array.isArray(res) ? res : res.data || [];
+};
+
+export const trashLead = async (id: string, deleteReason: string = 'otro') => {
+  return request<{ success: boolean }>(`/api/leads/${id}/trash`, {
+    method: 'POST',
+    body: JSON.stringify({ deleteReason }),
+  });
+};
+
+export const batchTrashLeads = async (ids: string[], deleteReason: string = 'otro') => {
+  return request<{ success: boolean; count: number }>(`/api/leads/batch-trash`, {
+    method: 'POST',
+    body: JSON.stringify({ ids, deleteReason }),
+  });
+};
+
+export const restoreLead = async (id: string) => {
+  return request<{ success: boolean }>(`/api/leads/${id}/restore`, {
+    method: 'POST',
+  });
+};
+
+export const permanentlyDeleteLead = async (id: string) => {
+  return request<{ success: boolean }>(`/api/leads/${id}/permanent`, {
+    method: 'DELETE',
+  });
+};
+
+export const markLeadViewed = async (id: string) => {
+  return request<{ success: boolean }>(`/api/leads/${id}/viewed`, {
+    method: 'POST',
+  });
+};
+
 export const updateLeadStatus = async (id: string, estado: string) => {
   return request<{ success: boolean }>(`/api/leads/${id}/status`, {
     method: 'PATCH',

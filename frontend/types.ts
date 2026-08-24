@@ -1,4 +1,4 @@
-export type ViewState = 'dashboard' | 'leads' | 'firestore' | 'workflows' | 'secrets';
+export type ViewState = 'dashboard' | 'leads' | 'trash' | 'firestore' | 'workflows' | 'secrets';
 
 export type DataCollection = 'leads' | 'quotes' | 'reservations';
 export interface Lead {
@@ -24,6 +24,12 @@ export interface Lead {
   landingPage?: string;
   notes?: string[];
   lastNote?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
+  deleteReason?: string;
+  previousStatus?: string;
+  firstViewedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   [key: string]: unknown;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar.tsx';
 import { DashboardView } from './components/views/DashboardView.tsx';
 import { LeadsView } from './components/views/LeadsView.tsx';
+import { TrashView } from './components/views/TrashView.tsx';
 import { FirestoreView } from './components/views/FirestoreView.tsx';
 import { WorkflowsView } from './components/views/WorkflowsView.tsx';
 import { SecretsView } from './components/views/SecretsView.tsx';
@@ -97,6 +98,8 @@ const App: React.FC = () => {
         return <DashboardView />;
       case 'leads':
         return <LeadsView />;
+      case 'trash':
+        return <TrashView />;
       case 'firestore':
         return <FirestoreView />;
       case 'workflows':

@@ -21,13 +21,16 @@ export async function dashboardRoutes(app: FastifyInstance) {
         firestore.collection('reservations').get(),
       ]);
 
-      const leadsDocs = leadsSnap.docs.map((doc) => doc.data());
-      const pendingLeads = leadsDocs.filter((lead) =>
+      const activeLeadsDocs = leadsSnap.docs
+        .map((doc) => doc.data())
+        .filter((lead) => !lead.isDeleted && lead.estado !== 'papelera' && lead.status !== 'papelera');
+
+      const pendingLeads = activeLeadsDocs.filter((lead) =>
         ['nuevo', 'pendiente', 'pending', 'received'].includes((lead.estado || lead.status || '').toLowerCase()),
       ).length;
 
       return reply.send({
-        leads: leadsSnap.size,
+        leads: activeLeadsDocs.length,
         quotes: quotesSnap.size,
         reservations: reservationsSnap.size,
         pendingLeads,

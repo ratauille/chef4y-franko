@@ -65,6 +65,8 @@ function serializeDoc(snapshot: DocumentSnapshot) {
     ...data,
     createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null,
     updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAt || null,
+    deletedAt: data.deletedAt?.toDate?.()?.toISOString?.() || data.deletedAt || null,
+    firstViewedAt: data.firstViewedAt?.toDate?.()?.toISOString?.() || data.firstViewedAt || null,
   };
 }
 
@@ -84,13 +86,24 @@ function verifyAuth(request: FastifyRequest, reply: FastifyReply): boolean {
   return true;
 }
 
+function logAudit(action: string, id: string, reason?: string) {
+  const date = new Date().toISOString();
+  const reasonText = reason ? ` | Reason: ${reason}` : '';
+  console.log(`[AUDIT] Action: ${action} | ID: ${id} | Date: ${date}${reasonText}`);
+}
+
 export async function crmRoutes(app: FastifyInstance) {
-  // GET /api/leads (Protegido)
+  // 1. STATIC ROUTES FIRST (To prevent Fastify :id route conflict)
+
+  // GET /api/leads (Protegido - Solo leads activos, excluye papelera)
   app.get('/leads', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
     try {
       const snapshot = await firestore.collection('leads').get();
-      const docs = snapshot.docs.map(serializeDoc);
+      const docs = snapshot.docs
+        .map(serializeDoc)
+        .filter((d: any) => !d.isDeleted && d.estado !== 'papelera' && d.status !== 'papelera');
+
       docs.sort((a: any, b: any) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -107,6 +120,71 @@ export async function crmRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /api/leads/trash (Protegido - Obtener solo leads en la papelera)
+  app.get('/leads/trash', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const snapshot = await firestore.collection('leads').get();
+      const docs = snapshot.docs
+        .map(serializeDoc)
+        .filter((d: any) => d.isDeleted === true || d.estado === 'papelera' || d.status === 'papelera');
+
+      docs.sort((a: any, b: any) => {
+        const timeA = a.deletedAt ? new Date(a.deletedAt).getTime() : (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+        const timeB = b.deletedAt ? new Date(b.deletedAt).getTime() : (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+        return timeB - timeA;
+      });
+      return reply.send({ success: true, data: docs });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(503).send({
+        success: false,
+        error: 'firestore_unavailable',
+        message: error.message || 'Error al obtener leads de la papelera.',
+      });
+    }
+  });
+
+  // POST /api/leads/batch-trash (Protegido - Mover selección a papelera)
+  app.post<{ Body: { ids?: string[]; deleteReason?: string } }>('/leads/batch-trash', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const ids = Array.isArray(request.body?.ids) ? request.body.ids : [];
+      const deleteReason = (request.body?.deleteReason || 'otro').toString().trim();
+
+      if (ids.length === 0) {
+        return reply.code(400).send({ success: false, error: 'validation_error', message: 'Se requiere una lista de IDs.' });
+      }
+
+      const batch = firestore.batch();
+      for (const id of ids) {
+        const docRef = firestore.collection('leads').doc(id);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          const data = docSnap.data() || {};
+          const previousStatus = data.estado || data.status || 'nuevo';
+          batch.update(docRef, {
+            isDeleted: true,
+            deletedAt: FieldValue.serverTimestamp(),
+            deletedBy: 'Chef Franko (Admin)',
+            deleteReason,
+            previousStatus,
+            estado: 'papelera',
+            status: 'papelera',
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          logAudit('BATCH_TRASH', id, deleteReason);
+        }
+      }
+
+      await batch.commit();
+      return reply.send({ success: true, count: ids.length, deleteReason });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
+    }
+  });
+
   // GET /api/leads/recent?limit=10 (Protegido)
   app.get<{ Querystring: { limit?: string } }>('/leads/recent', async (request, reply) => {
     if (!verifyAuth(request, reply)) return;
@@ -115,18 +193,21 @@ export async function crmRoutes(app: FastifyInstance) {
       const limit = isNaN(limitRaw) ? 10 : Math.max(1, Math.min(limitRaw, 50));
 
       const snapshot = await firestore.collection('leads').get();
-      const docs = snapshot.docs.map((doc) => {
-        const data = doc.data() || {};
-        return {
-          id: doc.id,
-          nombre: data.nombre || data.fullName || 'Sin nombre',
-          email: data.email || null,
-          telefono: data.telefono || data.phone || null,
-          servicio: data.servicio || data.experienceType || null,
-          estado: data.estado || data.status || 'nuevo',
-          createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null,
-        };
-      });
+      const docs = snapshot.docs
+        .map((doc) => {
+          const data = doc.data() || {};
+          return {
+            id: doc.id,
+            nombre: data.nombre || data.fullName || 'Sin nombre',
+            email: data.email || null,
+            telefono: data.telefono || data.phone || null,
+            servicio: data.servicio || data.experienceType || null,
+            estado: data.estado || data.status || 'nuevo',
+            isDeleted: data.isDeleted || false,
+            createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null,
+          };
+        })
+        .filter((d: any) => !d.isDeleted && d.estado !== 'papelera');
 
       docs.sort((a: any, b: any) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -146,6 +227,131 @@ export async function crmRoutes(app: FastifyInstance) {
         error: 'firestore_unavailable',
         message: error.message || 'Error al obtener leads recientes.',
       });
+    }
+  });
+
+  // 2. PARAMETERIZED ROUTES AFTER STATIC ROUTES
+
+  // POST /api/leads/:id/trash (Protegido - Mover a papelera individual)
+  app.post<{ Params: { id: string }; Body: { deleteReason?: string; deletedBy?: string } }>('/leads/:id/trash', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      const deleteReason = (request.body?.deleteReason || 'otro').toString().trim();
+      const deletedBy = (request.body?.deletedBy || 'Chef Franko (Admin)').toString().trim();
+
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado.' });
+      }
+
+      const data = docSnap.data() || {};
+      const previousStatus = data.estado || data.status || 'nuevo';
+
+      await docRef.update({
+        isDeleted: true,
+        deletedAt: FieldValue.serverTimestamp(),
+        deletedBy,
+        deleteReason,
+        previousStatus,
+        estado: 'papelera',
+        status: 'papelera',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      logAudit('TRASH', id, deleteReason);
+      return reply.send({ success: true, id, deleteReason, previousStatus });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
+    }
+  });
+
+  // POST /api/leads/:id/restore (Protegido - Restaurar de papelera)
+  app.post<{ Params: { id: string } }>('/leads/:id/restore', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado.' });
+      }
+
+      const data = docSnap.data() || {};
+      const restoredStatus = data.previousStatus || 'nuevo';
+
+      await docRef.update({
+        isDeleted: false,
+        deletedAt: FieldValue.delete(),
+        deletedBy: FieldValue.delete(),
+        deleteReason: FieldValue.delete(),
+        estado: restoredStatus,
+        status: restoredStatus,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      logAudit('RESTORE', id);
+      return reply.send({ success: true, id, status: restoredStatus });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
+    }
+  });
+
+  // DELETE /api/leads/:id/permanent (Protegido - Eliminar permanentemente únicamente el ID seleccionado)
+  app.delete<{ Params: { id: string } }>('/leads/:id/permanent', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      if (!id || typeof id !== 'string') {
+        return reply.code(400).send({ success: false, error: 'validation_error', message: 'Se requiere ID válido.' });
+      }
+
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado en Firestore.' });
+      }
+
+      await docRef.delete();
+      logAudit('PERMANENT_DELETE', id);
+
+      return reply.send({ success: true, id, message: 'Lead eliminado permanentemente.' });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
+    }
+  });
+
+  // POST /api/leads/:id/viewed (Protegido - Registrar primera visualización firstViewedAt)
+  app.post<{ Params: { id: string } }>('/leads/:id/viewed', async (request, reply) => {
+    if (!verifyAuth(request, reply)) return;
+    try {
+      const { id } = request.params;
+      const docRef = firestore.collection('leads').doc(id);
+      const docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        return reply.code(404).send({ success: false, error: 'not_found', message: 'Lead no encontrado.' });
+      }
+
+      const data = docSnap.data() || {};
+      if (!data.firstViewedAt) {
+        await docRef.update({
+          firstViewedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        logAudit('FIRST_VIEWED', id);
+      }
+
+      return reply.send({ success: true, id });
+    } catch (error: any) {
+      app.log.error(error);
+      return reply.code(500).send({ success: false, error: 'internal_error', message: error.message });
     }
   });
 
@@ -171,6 +377,7 @@ export async function crmRoutes(app: FastifyInstance) {
         updatedAt: FieldValue.serverTimestamp(),
       });
 
+      logAudit('STATUS_UPDATE', id, estado);
       return reply.send({ success: true, id, estado });
     } catch (error: any) {
       app.log.error(error);
@@ -200,6 +407,7 @@ export async function crmRoutes(app: FastifyInstance) {
         updatedAt: FieldValue.serverTimestamp(),
       });
 
+      logAudit('ADD_NOTE', id);
       return reply.send({ success: true, id, note });
     } catch (error: any) {
       app.log.error(error);
