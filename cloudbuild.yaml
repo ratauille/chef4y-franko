@@ -1,0 +1,28 @@
+steps:
+  # 1. Build
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:$COMMIT_SHA', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:latest', '.']
+
+  # 2. Push
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:$COMMIT_SHA']
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:latest']
+
+  # 3. Deploy a Cloud Run con Secret Manager (PRO)
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      entrypoint: gcloud
+      args:
+              - 'run'
+              - 'deploy'
+              - 'chefos-api'
+              - "--image=us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:$COMMIT_SHA"
+              - '--region=us-central1'
+              - '--platform=managed'
+              - '--allow-unauthenticated'
+              - "--service-account=chefos-api@$PROJECT_ID.iam.gserviceaccount.com"
+              - "--set-secrets=WHATSAPP_API_TOKEN=WHATSAPP_API_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WEBHOOK_SECRET_TOKEN=WEBHOOK_SECRET_TOKEN:latest"
+
+images:
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:$COMMIT_SHA'
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/chefos-api/chefos-api:latest'
