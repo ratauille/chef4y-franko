@@ -1,53 +1,62 @@
-# Vertex AI Studio Frontend App with Node.js Backend
+# chefos-api - Deploy Cloud Run
 
-This repository contains a frontend and a Node.js backend, designed to run together.
-The backend acts as a proxy, handling Google Cloud API calls.
+Perfecto — ese deploy.sh ya te deja el flujo limpio.
 
-This project is intended for demonstration and prototyping purposes only.
-It is not intended for use in a production environment.
+Yo voy con la B) README + comandos PRO con Secret Manager que es lo que te falta para producción. Te lo dejo listo para que lo guardes como README.md en la raíz:
 
-## Prerequisites
+# README.md
 
-To run this application locally, you need:
+## deploy.sh
 
-*   **[Google Cloud SDK / gcloud CLI](https://cloud.google.com/sdk/docs/install)**: Follow the instructions to install the SDK.
+Script interactivo en la raíz para gestionar secretos.
 
-*   **gcloud Initialization**:
-    *   Initialize the gcloud CLI:
-        ```bash
-        gcloud init
-        ```
-    *   Authenticate for Application Default Credentials (needed to call Google Cloud APIs):
-        ```bash
-        gcloud auth application-default login
-        ```
+**Qué hace:**
+1. Pide `WHATSAPP_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WEBHOOK_SECRET_TOKEN`
+2. Opción 1: Guarda en `.env` local
+3. Opción 2: Inserta directo en Cloud Run con `gcloud run services update --update-env-vars`
 
-*   **Node.js and npm**: Ensure you have Node.js and its package manager, `npm`, installed on your machine.
-
-## Project Structure
-
-The project is organized into two main directories:
-
-*   `frontend/`: Contains the Frontend application code.
-*   `backend/`: Contains the Node.js/Express server code to proxy Google Cloud API calls.
-
-## Backend Environment Variables
-
-The `backend/.env.local` file is automatically generated when you download this application.
-It contains essential Google Cloud environment variables pre-configured based on your project settings at the time of download.
-
-The variables set in `backend/.env.local` are:
-*   `API_BACKEND_PORT`: The port the backend API server listens on (e.g., `5000`).
-*   `API_PAYLOAD_MAX_SIZE`: The maximum size of the request payload accepted by the backend server (e.g., `5mb`).
-*   `GOOGLE_CLOUD_LOCATION`: The Google Cloud region associated with your project.
-*   `GOOGLE_CLOUD_PROJECT`: Your Google Cloud Project ID.
-
-**Note:** These variables are automatically populated during the download process.
-You can modify the values in `backend/.env.local` if you need to change them.
-
-## Installation and Running the App
-
-To install dependencies and run your Google Cloud Vertex AI Studio App locally, execute the following command:
-
+**Uso:**
 ```bash
-npm install && npm run dev
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Requisitos
+- gcloud CLI: `gcloud auth login`
+- Proyecto: `my-gcp-project-123`
+- Service Account: `chefos-api@my-gcp-project-123.iam.gserviceaccount.com`
+
+Deploy completo (Artifact Registry - Recomendado)
+```bash
+# Crear repo (solo 1 vez)
+gcloud artifacts repositories create chefos-api --repository-format=docker --location=us-central1
+
+# Build & Deploy
+gcloud builds submit --tag us-central1-docker.pkg.dev/my-gcp-project-123/chefos-api/chefos-api:latest .
+
+gcloud run deploy chefos-api \
+ --image us-central1-docker.pkg.dev/my-gcp-project-123/chefos-api/chefos-api:latest \
+ --region us-central1 \
+ --service-account chefos-api@my-gcp-project-123.iam.gserviceaccount.com \
+ --allow-unauthenticated --port 8080 \
+ --set-secrets WHATSAPP_API_TOKEN=WHATSAPP_API_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WEBHOOK_SECRET_TOKEN=WEBHOOK_SECRET_TOKEN:latest
+```
+
+Setup PRO con Secret Manager
+```bash
+# Crear secretos
+echo -n "TOKEN" | gcloud secrets create WHATSAPP_API_TOKEN --data-file=-
+echo -n "PHONE_ID" | gcloud secrets create WHATSAPP_PHONE_NUMBER_ID --data-file=-
+echo -n "SECRET" | gcloud secrets create WEBHOOK_SECRET_TOKEN --data-file=-
+
+# Dar acceso al Service Account
+for SECRET in WHATSAPP_API_TOKEN WHATSAPP_PHONE_NUMBER_ID WEBHOOK_SECRET_TOKEN; do
+  gcloud secrets add-iam-policy-binding $SECRET \
+   --member="serviceAccount:chefos-api@my-gcp-project-123.iam.gserviceaccount.com" \
+   --role="roles/secretmanager.secretAccessor"
+done
+```
+
+Code
+
+¿Quieres que ahora también te genere la **opción A**? Te creo el `cloudbuild.yaml` + `Dockerfile` optimizado para Node.js para que el push a `main` haga deploy automático.
