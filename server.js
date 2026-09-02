@@ -19,32 +19,37 @@ const MY_WHATSAPP_NUMBER = process.env.MY_WHATSAPP_NUMBER; // Formato internacio
 const WEBHOOK_SECRET_TOKEN = process.env.WEBHOOK_SECRET_TOKEN || 'chefos_secure_token_2026';
 
 // Función auxiliar para enviar mensaje por WhatsApp
-async function sendWhatsAppAlert(messageText) {
-  if (!WHATSAPP_API_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !MY_WHATSAPP_NUMBER) {
-    console.log('⚠️ Variables de WhatsApp no configuradas. Mensaje generado en consola:');
-    console.log(messageText);
-    return;
+async function sendWhatsAppAlert(message) {
+  if (!process.env.WHATSAPP_API_TOKEN || !process.env.WHATSAPP_PHONE_NUMBER_ID) {
+    console.error('[WhatsApp] Missing credentials - WHATSAPP_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set');
+    return { success: false, reason: 'missing_credentials' };
   }
 
   try {
-    await axios.post(
-      `https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+    const url = `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const res = await axios.post(
+      url,
       {
         messaging_product: 'whatsapp',
-        to: MY_WHATSAPP_NUMBER,
+        to: process.env.MY_WHATSAPP_NUMBER,
         type: 'text',
-        text: { body: messageText }
+        text: { body: message }
       },
       {
         headers: {
-          'Authorization': `Bearer ${WHATSAPP_API_TOKEN}`,
+          'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
           'Content-Type': 'application/json'
         }
       }
     );
-    console.log('✅ Mensaje de WhatsApp enviado correctamente.');
+
+    console.log('[WhatsApp] API response 200 - Message ID:', res.data?.messages?.[0]?.id);
+    return { success: true, data: res.data };
+
   } catch (error) {
-    console.error('❌ Error enviando WhatsApp:', error.response ? error.response.data : error.message);
+    const meta = error.response ? error.response.data : null;
+    console.error('[WhatsApp] API Error:', meta || error.message);
+    return { success: false, reason: 'meta_error', meta: meta, error: error.message };
   }
 }
 
@@ -181,12 +186,18 @@ app.post('/api/v1/test-phone-notification', async (req, res) => {
       `⏱️ *Hora:* ${new Date().toLocaleTimeString('es-MX', { timeZone: 'America/Mexico_City' })}\n` +
       `📍 *Origen:* Google Cloud Run Serverless`;
 
-    await sendWhatsAppAlert(testMsg);
+    const result = await sendWhatsAppAlert(testMsg);
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'Notificación de prueba enviada exitosamente a tu WhatsApp.'
-    });
+    if (!result.success) {
+      return res.status(500).json({
+        status: 'error',
+        reason: result.reason,
+        meta: result.meta || result.error,
+        message: 'WhatsApp NO enviado - revisa logs Cloud Run'
+      });
+    }
+
+    return res.json({ status: 'success', message: 'Notificación enviada a WhatsApp', metaId: result.data?.messages?.[0]?.id });
   } catch (error) {
     return res.status(500).json({ status: 'error', message: error.message });
   }
