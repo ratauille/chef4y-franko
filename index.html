@@ -21,5 +21,43 @@
 <script>
 const pics=[['https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/1556f6988_9ca0cd6c7_ChatGPTImage22jul202606_11_08am.png','SOMOS','el lugar que nos reúne.'],['https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/7fc1947e2_6b18d6e34_51c60bb9-daf1-4fac-b55a-9c59b00806c11.png','SOMOS','respeto por lo que la tierra nos entrega.'],['https://base44.app/api/apps/6a5508bbcd2eb3e895394f46/files/mp/public/6a5508bbcd2eb3e895394f46/3a50e5f77_b26f4a792_eca255ec-ebfa-4df3-b6f6-83c3260fb4d1.png','SOMOS','memoria, oficio y curiosidad.']];let cur=0,timer;const slides=document.getElementById('slides'),dots=document.getElementById('dots'),eyebrow=document.getElementById('eyebrow'),line=document.getElementById('line');pics.forEach((p,i)=>{const f=document.createElement('figure');f.className='slide'+(i?'':' active');f.style.setProperty('--bg',`url("${p[0]}")`);f.innerHTML=`<img src="${p[0]}" alt="Chef 4 You — Food Lovers" loading="${i?'lazy':'eager'}"><div class="wash"></div>`;slides.appendChild(f);const d=document.createElement('button');if(!i)d.className='active';d.onclick=()=>show(i,true);dots.appendChild(d)});function show(i,manual=false){cur=i;document.querySelectorAll('.slide').forEach((x,n)=>x.classList.toggle('active',n===i));document.querySelectorAll('.dots button').forEach((x,n)=>x.classList.toggle('active',n===i));eyebrow.textContent=pics[i][1];line.textContent=pics[i][2];if(manual)restart()}function restart(){clearInterval(timer);timer=setInterval(()=>show((cur+1)%pics.length),4800)}document.getElementById('enter').onclick=()=>{document.getElementById('portal').style.display='none';document.getElementById('site').style.display='block';restart();window.scrollTo(0,0)};document.getElementById('home').onclick=()=>{clearInterval(timer);document.getElementById('site').style.display='none';document.getElementById('portal').style.display='grid';window.scrollTo(0,0)};document.querySelectorAll('[data-open-form]').forEach(b=>b.onclick=()=>document.getElementById('book').scrollIntoView({behavior:'smooth'}));function key(){return crypto.randomUUID?crypto.randomUUID():'lead-'+Date.now()+'-'+Math.random().toString(16).slice(2)}document.getElementById('form').onsubmit=async e=>{e.preventDefault();const status=document.getElementById('status'),submit=document.getElementById('submit');status.textContent='';submit.disabled=true;submit.textContent='ENVIANDO…';const payload={fullName:document.getElementById('name').value.trim(),phone:document.getElementById('phone').value.trim(),preferredChannel:'whatsapp',experienceType:'private_dining',serviceArea:'puerto_vallarta',serviceDate:document.getElementById('date').value,message:'Food Lovers — compartir una mesa',privacyConsent:true,contactConsent:true,emailMarketing:false,lang:'es',source:new URLSearchParams(location.search).get('utm_source')||'food_lovers'};try{const r=await fetch('https://chefos-backend-74980816903.us-central1.run.app/api/leads',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key()},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.message||'HTTP '+r.status);document.getElementById('formwrap').innerHTML='<div class="success">Gracias.<br>La mesa ya empezó a tomar forma.</div>';window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'generate_lead',lead_id:data.id||'',service:'private_dining'})}catch(err){console.error(err);status.innerHTML='No pudimos enviar. <a href="https://wa.me/523221606843" target="_blank" rel="noopener">WhatsApp →</a>';submit.disabled=false;submit.textContent='CONSULTAR FECHA ↗'}};
 </script>
+
+<script>
+                var url = 'https://wati-integration-prod-service.clare.ai/v2/watiWidget.js?85971';
+                var s = document.createElement('script');
+                s.type = 'text/javascript';
+                s.async = true;
+                s.src = url;
+                var options = {
+                "enabled":true,
+                "chatButtonSetting":{
+                    "backgroundColor":"#e4ca21",
+                    "ctaText":"Chat with us",
+                    "borderRadius":"25",
+                    "marginLeft": "0",
+                    "marginRight": "20",
+                    "marginBottom": "20",
+                    "ctaIconWATI":false,
+                    "position":"left"
+                },
+                "brandSetting":{
+                    "brandName":"Wati",
+                    "brandSubTitle":"undefined",
+                    "brandImg":"https://www.wti.io/wp-content/uploads/2023/04/Wati-log",
+                    "welcomeText":"Hi there!\nHow can I help you?",
+                    "messageText":"{{page_link}}Hello, chef4youbyfranko1983{{page_link}}%0A I have a question about {{page_link}}",
+                    "backgroundColor":"#e4ca21",
+                    "ctaText":"Chat with us",
+                    "borderRadius":"25",
+                    "autoShow":true,
+                    "phoneNumber":"523221606843"
+                }
+                };
+                s.onload = function() {
+                    CreateWhatsappChatWidget(options);
+                };
+                var x = document.getElementsByTagName('script')[0];
+                x.parentNode.insertBefore(s, x);
+            </script>
 </body>
 </html>
