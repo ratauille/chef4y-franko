@@ -21,7 +21,15 @@ await app.register(cors, {
     }
     cb(null, false);
   },
-  allowedHeaders: ['Content-Type', 'x-api-key', 'Idempotency-Key', 'x-idempotency-key', 'Authorization'],
+  allowedHeaders: [
+    'Content-Type',
+    'x-api-key',
+    'Idempotency-Key',
+    'x-idempotency-key',
+    'X-ReCaptcha-Token',
+    'X-ReCaptcha-Action',
+    'Authorization',
+  ],
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 });

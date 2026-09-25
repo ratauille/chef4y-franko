@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { FieldValue, DocumentSnapshot } from '@google-cloud/firestore';
 import { firestore } from '../../shared/firestore.js';
+import { verifyRecaptchaToken } from '../../shared/recaptcha.js';
 
 interface LeadInput {
   nombre?: string;
@@ -420,6 +421,31 @@ export async function crmRoutes(app: FastifyInstance) {
     try {
       const body = request.body || {};
       const idempotencyKey = (request.headers['idempotency-key'] || request.headers['x-idempotency-key'] || '').toString().trim();
+      const recaptchaToken = (request.headers['x-recaptcha-token'] || '').toString().trim();
+      const recaptchaAction = (request.headers['x-recaptcha-action'] || 'LEAD').toString().trim();
+
+      if (recaptchaAction !== 'LEAD') {
+        return reply.code(403).send({
+          success: false,
+          error: 'recaptcha_failed',
+          message: 'No se pudo validar la protección antispam.',
+        });
+      }
+
+      const recaptcha = await verifyRecaptchaToken(recaptchaToken, 'LEAD');
+      if (!recaptcha.valid) {
+        request.log.warn({
+          reason: recaptcha.reason,
+          score: recaptcha.score,
+        }, 'Lead rejected by reCAPTCHA');
+        return reply.code(recaptcha.status).send({
+          success: false,
+          error: recaptcha.status === 503 ? 'recaptcha_unavailable' : 'recaptcha_failed',
+          message: recaptcha.status === 503
+            ? 'La protección antispam no está disponible temporalmente. Inténtalo nuevamente.'
+            : 'No se pudo validar la protección antispam. Recarga la página e inténtalo nuevamente.',
+        });
+      }
 
       const nombre = (body.nombre || body.fullName || '').toString().trim();
       const rawEmail = (body.email || '').toString().trim();
